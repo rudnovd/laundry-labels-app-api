@@ -1,0 +1,35 @@
+version: '3.9'
+services:
+  mongodb:
+    image: mongo:latest
+    env_file:
+      - .env
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${DATABASE_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${DATABASE_PASSWORD}
+    ports:
+      - 27017:27017
+    volumes:
+      - mongodb_data_container:/data/db
+  app:
+    container_name: app
+    restart: always
+    build: .
+    env_file:
+      - .env
+    environment:
+      APP_PORT: ${APP_PORT}
+      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_NAME: ${DATABASE_NAME}
+      DATABASE_USER: ${DATABASE_USER}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+    ports:
+      - 5000:80
+    external_links:
+      - mongodb
+    depends_on:
+      - mongodb
+
+volumes:
+  mongodb_data_container:

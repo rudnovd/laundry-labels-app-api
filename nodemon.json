@@ -1,0 +1,11 @@
+{
+  "restartable": "rs",
+  "ignore": [".git", "node_modules/**/node_modules", "dist"],
+  "verbose": true,
+  "exec": "ts-node --files --pretty index.ts",
+  "watch": [".", "api", "models"],
+  "env": {
+    "NODE_ENV": "development"
+  },
+  "ext": "js,json,ts"
+}
