@@ -2,3 +2,7 @@ node_modules/
 dist/
 .vscode
 .env
+.idea
+dhparam/*
+nginx-conf/nginx.conf
+public

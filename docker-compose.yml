@@ -1,7 +1,24 @@
 version: '3.9'
 services:
+  nginx:
+    image: nginx:mainline-alpine
+    container_name: laundry-labels-app-nginx
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - web-root:/var/www/html
+      - ./nginx-conf:/etc/nginx/conf.d
+      - certbot-etc:/etc/letsencrypt
+      - certbot-var:/var/lib/letsencrypt
+      - dhparam:/etc/ssl/certs
+    networks:
+      - app-network
   mongodb:
     image: mongo:latest
+    container_name: laundry-labels-app-mongodb
+    hostname: mongodb-host
     env_file:
       - .env
     environment:
@@ -11,25 +28,64 @@ services:
       - 27017:27017
     volumes:
       - mongodb_data_container:/data/db
+    networks:
+      - app-network
   app:
-    container_name: app
+    container_name: laundry-labels-app-app
     restart: always
     build: .
+    command: npm run prod
     env_file:
       - .env
+    ports:
+      - ${APP_PORT}:${APP_PORT}
+    depends_on:
+      - mongodb
+    volumes:
+      - app_container:/app
+    networks:
+      - app-network
     environment:
       APP_PORT: ${APP_PORT}
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: mongodb://mongodb-host:27017
       DATABASE_NAME: ${DATABASE_NAME}
       DATABASE_USER: ${DATABASE_USER}
       DATABASE_PASSWORD: ${DATABASE_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
-    ports:
-      - 5000:80
-    external_links:
-      - mongodb
+  certbot:
+    image: certbot/certbot
+    container_name: laundry-labels-app-certbot
+    env_file:
+      - .env
+    environment:
+      EMAIL: ${EMAIL}
+      DOMAIN: ${DOMAIN}
+    volumes:
+      - certbot-etc:/etc/letsencrypt
+      - certbot-var:/var/lib/letsencrypt
+      - web-root:/var/www/html
     depends_on:
-      - mongodb
+      - nginx
+    command: certonly --webroot --webroot-path=/var/www/html --email $EMAIL --agree-tos --no-eff-email --force-renewal -d $DOMAIN
 
 volumes:
   mongodb_data_container:
+  app_container:
+  certbot-etc:
+  certbot-var:
+  web-root:
+    driver: local
+    driver_opts:
+      type: none
+      device: dist/public
+      o: bind
+  dhparam:
+    driver: local
+    driver_opts:
+      type: none
+      device: dhparam
+      o: bind
+
+networks:
+  app-network:
+    driver: bridge

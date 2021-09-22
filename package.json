@@ -9,13 +9,14 @@
   "author": "rudnovd",
   "license": "GPL-3.0",
   "engines": {
-    "node": "^16.1.0"
+    "node": ">=16"
   },
   "scripts": {
     "start": "ts-node index.ts",
     "dev": "nodemon",
     "build": "tsc -b --clean && tsc",
-    "lint": "eslint . --ext .ts"
+    "lint": "eslint . --ext .ts",
+    "prod": "node dist/index.js"
   },
   "dependencies": {
     "bcrypt": "^5.0.1",
