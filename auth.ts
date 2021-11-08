@@ -1,9 +1,10 @@
 import bcrypt from 'bcrypt'
 import { randomUUID } from 'crypto'
-import { Request, Response } from 'express'
+import { NextFunction, Request, Response } from 'express'
 import { sign } from 'jsonwebtoken'
 import ms from 'ms'
 import { jwtSecret } from './config'
+import { AppError } from './error'
 import { RefreshTokenModel } from './models/refreshTokens'
 import { User, UserModel } from './models/user'
 
@@ -31,22 +32,23 @@ async function createRefreshToken(payload: { user: User }) {
 function createAccessToken(req: Request, payload: { user: User }) {
   return sign({ data: { _id: payload.user._id, email: payload.user.email } }, jwtSecret, {
     algorithm: 'HS512',
+    expiresIn: '30m',
     issuer: req.hostname,
     subject: payload.user._id.toString(),
-    expiresIn: '30m',
   })
 }
 
-export async function registration(req: Request, res: Response) {
+export async function registration(req: Request, res: Response, next: NextFunction) {
   let { email, password } = req.body
 
   try {
-    if (!email || !password)
-      return res.status(400).send({ error: `expected an object with username, password but got: ${req.body}` })
+    if (!email || !password) {
+      return next(new AppError('ERR_AUTH_REGISTARTION_NO_EMAIL_OR_PASSWORD', 400, `No email or password`))
+    }
 
-    password = await bcrypt.hash(password, 10)
     const currentUser = await UserModel.find({ email })
     if (!currentUser.length) {
+      password = await bcrypt.hash(password, 10)
       const newUser = new UserModel({
         email,
         password,
@@ -54,20 +56,20 @@ export async function registration(req: Request, res: Response) {
       const user = await newUser.save()
       return res.status(200).send(user)
     } else {
-      return res.status(406).send({ error: 'user name already exists' })
+      return next(new AppError('ERR_AUTH_REGISTARTION_EMAIL_ALREADY_EXIST', 406, 'Email already exist'))
     }
   } catch (error) {
-    res.status(500).send({ error })
+    next(new AppError('ERR_AUTH_REGISTARTION', 500, 'Error on registation'))
   }
 }
 
-export async function login(req: Request, res: Response) {
+export async function login(req: Request, res: Response, next: NextFunction) {
   const { email, password } = req.body
 
   try {
     const user = await UserModel.findOne({ email }).select('+password').exec()
 
-    if (!user) return res.status(401).send({ error: 'User not found' })
+    if (!user) return next(new AppError('ERR_AUTH_LOGIN_USER_NOT_FOUND', 401, 'User not found'))
 
     if (await bcrypt.compare(password, user.password)) {
       const { token, expiresIn } = await createRefreshToken({ user })
@@ -78,28 +80,32 @@ export async function login(req: Request, res: Response) {
         refreshToken,
       })
     } else {
-      res.status(401).send({ error: 'Wrong email or password' })
+      return next(new AppError('ERR_AUTH_LOGIN_WRONG_EMAIL_OR_PASSWORD', 401, 'Wrong email or password'))
     }
   } catch (error) {
-    res.status(500).send({ error })
+    next(new AppError('ERR_AUTH_LOGIN', 500, 'Error on login'))
   }
 }
 
-export async function refreshToken(req: Request, res: Response) {
-  if (!req.cookies) return res.status(500).send('No refreshToken cookie')
+export async function refreshToken(req: Request, res: Response, next: NextFunction) {
+  if (!req.cookies)
+    return next(new AppError('ERR_AUTH_REFRESHTOKEN_COOKIE_REQUIRED', 500, '"refreshToken" cookie required'))
   const { refreshToken } = req.cookies
 
-  if (!refreshToken) return res.status(401).send({ error: 'Refresh token is not found!' })
+  if (!refreshToken)
+    return next(new AppError('ERR_AUTH_REFRESHTOKEN_REFRESHTOKEN_NOT_FOUND', 401, 'Refresh token not found'))
 
   try {
     const token = await RefreshTokenModel.findOne({ token: refreshToken })
-    if (!token) return res.status(401).send({ error: 'Refresh Token not found!' })
+    if (!token)
+      return next(new AppError('ERR_AUTH_REFRESHTOKEN_REFRESHTOKEN_NOT_FOUND', 401, 'Refresh token not found'))
 
     await RefreshTokenModel.deleteOne({ token: token.token })
-    if (token.expiresIn < new Date().getTime()) return res.status(500).send({ error: 'Token expired' })
+    if (token.expiresIn < new Date().getTime())
+      return next(new AppError('ERR_AUTH_REFRESHTOKEN_TOKEN_EXPIRED', 500, 'Token expired'))
 
     const user = await UserModel.findOne({ _id: token.userId })
-    if (!user) return res.status(500).send({ error: 'User not found' })
+    if (!user) return next(new AppError('ERR_AUTH_REFRESHTOKEN_USER_NOT_FOUND', 401, 'User not found'))
 
     const newRefreshToken = await createRefreshToken({ user })
 
@@ -113,26 +119,24 @@ export async function refreshToken(req: Request, res: Response) {
       refreshToken: newRefreshToken.token,
     })
   } catch (error) {
-    res.status(500).send({ error })
+    next(new AppError('ERR_AUTH_REFRESHTOKEN', 500, 'Error on refreshtoken'))
   }
 }
 
-export async function logout(req: Request, res: Response) {
-  const { refreshToken } = req.body
-
-  if (!refreshToken) return res.status(500).send({ error: 'Refresh token is not found!' })
+export async function logout(req: Request, res: Response, next: NextFunction) {
+  if (!req.cookies) return next(new AppError('ERR_AUTH_LOGOUT', 500, '"refreshToken" cookie required'))
+  const { refreshToken } = req.cookies
 
   try {
     const token = await RefreshTokenModel.findOne({ token: refreshToken })
     if (!token) {
-      res.status(401).send({ error: 'Refresh token is not found!' })
-      return
+      return next(new AppError('ERR_AUTH_LOGOUT_REFRESHTOKEN_NOT_FOUND', 401, 'Refresh token not found'))
     }
 
     await RefreshTokenModel.deleteOne({ token: token.token })
 
-    return res.status(200).send('true')
+    return res.status(200).send(true)
   } catch (error) {
-    res.status(500).send({ error })
+    next(new AppError('ERR_AUTH_LOGOUT', 500, 'Error on logout'))
   }
 }
