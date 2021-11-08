@@ -5,6 +5,7 @@ import fileUpload from 'express-fileupload'
 import jwt from 'express-jwt'
 import rateLimit from 'express-rate-limit'
 import helmet from 'helmet'
+import 'module-alias/register'
 import mongoose from 'mongoose'
 import morgan from 'morgan'
 import ms from 'ms'
@@ -59,6 +60,7 @@ app
   .use('/api', apiRouter)
 
 app.use((error: AppError, _request: Request, res: Response, _next: NextFunction) => {
+  console.error(`${error.name}:${error.stack}`)
   res.status(error.status || 500).json({
     error: {
       name: error.name,

@@ -30,6 +30,7 @@
     "express-rate-limit": "^5.5.1",
     "helmet": "^4.6.0",
     "jsonwebtoken": "^8.5.1",
+    "module-alias": "^2.2.2",
     "mongodb": "^4.1.4",
     "mongoose": "^6.0.12",
     "morgan": "^1.10.0",
@@ -57,5 +58,8 @@
     "eslint-plugin-prettier": "^4.0.0",
     "nodemon": "^2.0.14",
     "prettier": "^2.4.1"
+  },
+  "_moduleAliases": {
+    "@": "."
   }
 }
