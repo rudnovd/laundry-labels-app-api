@@ -2,7 +2,7 @@ version: '3.9'
 services:
   nginx:
     image: nginx:mainline-alpine
-    container_name: laundry-labels-app-nginx
+    container_name: laundry-labels-app-server-mongodb
     restart: unless-stopped
     ports:
       - '80:80'
@@ -14,10 +14,10 @@ services:
       - certbot-var:/var/lib/letsencrypt
       - dhparam:/etc/ssl/certs
     networks:
-      - app-network
+      - main-network
   mongodb:
     image: mongo:latest
-    container_name: laundry-labels-app-mongodb
+    container_name: laundry-labels-app-server-mongodb
     hostname: mongodb-host
     env_file:
       - .env
@@ -27,11 +27,21 @@ services:
     ports:
       - 27017:27017
     volumes:
-      - mongodb_data_container:/data/db
+      - mongodb-volume:/data/db
     networks:
-      - app-network
+      - main-network
+  redis:
+    image: redis:alpine
+    container_name: laundry-labels-app-server-redis
+    ports:
+      - 6379:6379
+    volumes:
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
+    networks:
+      - main-network
+    command: redis-server /usr/local/etc/redis/
   app:
-    container_name: laundry-labels-app-app
+    container_name: laundry-labels-app-server-app
     restart: always
     build: .
     command: npm run prod
@@ -42,9 +52,9 @@ services:
     depends_on:
       - mongodb
     volumes:
-      - app_container:/app
+      - app-container:/app
     networks:
-      - app-network
+      - main-network
     environment:
       APP_PORT: ${APP_PORT}
       DATABASE_URL: mongodb://mongodb-host:27017
@@ -54,7 +64,7 @@ services:
       JWT_SECRET: ${JWT_SECRET}
   certbot:
     image: certbot/certbot
-    container_name: laundry-labels-app-certbot
+    container_name: laundry-labels-app-server-certbot
     env_file:
       - .env
     environment:
@@ -69,8 +79,9 @@ services:
     command: certonly --webroot --webroot-path=/var/www/html --email $EMAIL --agree-tos --no-eff-email --force-renewal -d $DOMAIN
 
 volumes:
-  mongodb_data_container:
-  app_container:
+  mongodb-volume:
+  redis-container:
+  app-container:
   certbot-etc:
   certbot-var:
   web-root:
@@ -87,5 +98,5 @@ volumes:
       o: bind
 
 networks:
-  app-network:
+  main-network:
     driver: bridge

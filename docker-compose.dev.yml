@@ -1,0 +1,28 @@
+version: '3.9'
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: laundry-labels-app-server-mongodb-dev
+    env_file:
+      - .env
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${DATABASE_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${DATABASE_PASSWORD}
+    ports:
+      - 27017:27017
+    networks:
+      - main-network
+  redis:
+    image: redis:alpine
+    container_name: laundry-labels-app-server-redis-dev
+    ports:
+      - 6379:6379
+    volumes:
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
+    networks:
+      - main-network
+    command: redis-server /usr/local/etc/redis/
+
+networks:
+  main-network:
+    driver: bridge
