@@ -1,6 +1,8 @@
 export {}
 
 declare global {
+  var __basedir: string
+
   namespace Express {
     interface User {
       data: {
