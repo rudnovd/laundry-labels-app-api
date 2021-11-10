@@ -9,7 +9,7 @@ export async function getItems(req: Request, res: Response, next: NextFunction) 
 
     res.status(200).send(items)
   } catch (error) {
-    next(new AppError('ERR_GET_ITEMS', 500, 'Server cannot receive items'))
+    next(new AppError('ERR_GET_ITEMS', 500, 'Server cannot receive items', error))
   }
 }
 
@@ -19,7 +19,7 @@ export async function getItemById(req: Request, res: Response, next: NextFunctio
 
     res.status(200).send(item)
   } catch (error) {
-    next(new AppError('ERR_GET_ITEM_BY_ID', 500, 'Server cannot current item'))
+    next(new AppError('ERR_GET_ITEM_BY_ID', 500, 'Server cannot current item', error))
   }
 }
 
@@ -27,7 +27,7 @@ export async function postItem(req: Request, res: Response, next: NextFunction) 
   const { icons, images, tags } = req.body
 
   try {
-    images.map((image: Array<string>) => redis.del(image))
+    if (images.length) images.map((image: Array<string>) => redis.del(image))
 
     const newItem = new ItemModel({
       icons,
@@ -36,11 +36,13 @@ export async function postItem(req: Request, res: Response, next: NextFunction) 
       owner: req.user?.data._id,
     })
 
+    await newItem.validate()
+
     const item = await newItem.save()
 
     return res.status(200).send(item)
   } catch (error) {
-    next(new AppError('ERR_POST_ITEM', 500, 'Server cannot create new item'))
+    next(new AppError('ERR_POST_ITEM', 500, 'Server cannot create new item', error))
   }
 }
 
@@ -63,7 +65,7 @@ export async function editItem(req: Request, res: Response, next: NextFunction) 
 
     return res.status(200).send(newItem)
   } catch (error) {
-    next(new AppError('ERR_EDIT_ITEM', 500, 'Server cannot edit current item'))
+    next(new AppError('ERR_EDIT_ITEM', 500, 'Server cannot edit current item', error))
   }
 }
 
@@ -75,6 +77,6 @@ export async function deleteItem(req: Request, res: Response, next: NextFunction
 
     return res.status(200).send(true)
   } catch (error) {
-    next(new AppError('ERR_DELETE_ITEM', 500, 'Server cannot delete current item'))
+    next(new AppError('ERR_DELETE_ITEM', 500, 'Server cannot delete current item', error))
   }
 }

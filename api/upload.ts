@@ -8,7 +8,7 @@ export async function getItemImage(req: Request, res: Response, next: NextFuncti
   try {
     res.sendFile(`${global.__basedir}/public/upload/items/${req.params.file}`)
   } catch (error) {
-    next(new AppError('ERR_UPLOAD_GET_ITEM_IMAGE', 500, 'Server cannot send this image'))
+    next(new AppError('ERR_UPLOAD_GET_ITEM_IMAGE', 500, 'Server cannot send this image', error))
   }
 }
 

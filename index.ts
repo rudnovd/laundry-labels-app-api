@@ -12,6 +12,7 @@ import ms from 'ms'
 import path from 'path'
 import { jwtSecret } from './config'
 import { AppError } from './error'
+import { logger } from './logger'
 import './redis'
 import { apiRouter, authRouter, uploadRouter } from './router'
 
@@ -27,16 +28,24 @@ if (process.env.DATABASE_URL) {
         password: process.env.DATABASE_PASSWORD,
       },
     })
-    .then(() => console.log(`connected to database`))
-    .catch((error) => console.error(error))
+    .then(() => logger.info(`Server: connected to database`))
+    .catch((error) => logger.error(`Server: ${error}`))
 } else {
-  console.error('DATABASE_URL in .env not found')
+  logger.error('Server: DATABASE_URL in .env not found')
 }
 
 const app = express()
 
 app
-  .use(morgan(process.env.NODE_ENV !== 'production' ? 'dev' : 'tiny'))
+  .use(
+    morgan(':method :url :status - :response-time ms', {
+      stream: { write: (message) => logger.http(message.substring(0, message.lastIndexOf('\n'))) },
+      skip: () => {
+        const env = process.env.NODE_ENV || 'development'
+        return env !== 'development'
+      },
+    })
+  )
   .use(urlencoded({ extended: true }))
   .use(json())
   .use(cookieParser())
@@ -60,7 +69,12 @@ app
   .use('/api', apiRouter)
 
 app.use((error: AppError, _request: Request, res: Response, _next: NextFunction) => {
-  console.error(`${error.name}:${error.stack}`)
+  let logMessage = `Code: ${error.name}; message: ${error.message};`
+
+  let originalError = (error.originalError as Error) || ''
+  if (originalError) logMessage += ` original stack: ${originalError.stack}`
+
+  logger.error(logMessage)
   res.status(error.status || 500).json({
     error: {
       name: error.name,
@@ -69,4 +83,6 @@ app.use((error: AppError, _request: Request, res: Response, _next: NextFunction)
   })
 })
 
-app.listen(process.env.APP_PORT || 5000, () => console.log(`The server is running on port ${process.env.APP_PORT}`))
+app.listen(process.env.APP_PORT || 5000, () =>
+  logger.info(`Server: The server is running on port ${process.env.APP_PORT}`)
+)

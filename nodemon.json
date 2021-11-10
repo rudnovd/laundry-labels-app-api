@@ -1,8 +1,8 @@
 {
   "restartable": "rs",
-  "ignore": [".git", "node_modules/**/node_modules", "dist"],
+  "ignore": [".git", "node_modules/**/node_modules", "dist", "dhparam", "logs", "nginx-conf", "redis"],
   "verbose": true,
-  "exec": "ts-node --files --pretty index.ts",
+  "exec": "ts-node index.ts",
   "watch": [".", "api", "models"],
   "env": {
     "NODE_ENV": "development"

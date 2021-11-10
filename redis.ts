@@ -1,20 +1,21 @@
 import { CronJob } from 'cron'
 import { createClient } from 'redis'
+import { logger } from './logger'
 
 export const redis = createClient()
 redis.on('error', async (err) => {
-  console.log('Redis Client - ', err)
+  logger.log('Server: Redis Client - ', err)
   await redis.quit()
 })
-redis.connect().then(() => console.log('connected to Redis'))
+redis.connect().then(() => logger.info('Server: connected to Redis'))
 
 redis.clientId().then((clientId) => {
   if (!clientId) return
 
   const redisCleanImagesJob = new CronJob(
-    '* 30 * * * *',
+    '*/31 * * * *',
     async () => {
-      console.log('job redisCleanImagesJob is running')
+      logger.info('Redis: cron function "redisCleanImagesJob" is running now!')
       const keys = await redis.keys('*')
       const values = keys.map((key) => redis.get(key))
       Promise.all(values).then((values) => {
@@ -24,10 +25,11 @@ redis.clientId().then((clientId) => {
           }
         })
       })
+      logger.info('Redis: cron function "redisCleanImagesJob" is successfully completed.')
     },
     null,
     true
   )
   redisCleanImagesJob.start()
-  console.log('active jobs: redisCleanImagesJob')
+  logger.info('Redis: active cron functions: redisCleanImagesJob')
 })

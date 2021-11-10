@@ -37,7 +37,8 @@
     "ms": "^2.1.3",
     "redis": "^4.0.0-rc.3",
     "ts-node": "^10.4.0",
-    "typescript": "^4.4.4"
+    "typescript": "^4.4.4",
+    "winston": "^3.3.3"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.0",

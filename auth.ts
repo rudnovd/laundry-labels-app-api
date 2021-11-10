@@ -59,7 +59,7 @@ export async function registration(req: Request, res: Response, next: NextFuncti
       return next(new AppError('ERR_AUTH_REGISTARTION_EMAIL_ALREADY_EXIST', 406, 'Email already exist'))
     }
   } catch (error) {
-    next(new AppError('ERR_AUTH_REGISTARTION', 500, 'Error on registation'))
+    next(new AppError('ERR_AUTH_REGISTARTION', 500, 'Error on registation', error))
   }
 }
 
@@ -83,7 +83,7 @@ export async function login(req: Request, res: Response, next: NextFunction) {
       return next(new AppError('ERR_AUTH_LOGIN_WRONG_EMAIL_OR_PASSWORD', 401, 'Wrong email or password'))
     }
   } catch (error) {
-    next(new AppError('ERR_AUTH_LOGIN', 500, 'Error on login'))
+    next(new AppError('ERR_AUTH_LOGIN', 500, 'Error on login', error))
   }
 }
 
@@ -119,7 +119,7 @@ export async function refreshToken(req: Request, res: Response, next: NextFuncti
       refreshToken: newRefreshToken.token,
     })
   } catch (error) {
-    next(new AppError('ERR_AUTH_REFRESHTOKEN', 500, 'Error on refreshtoken'))
+    next(new AppError('ERR_AUTH_REFRESHTOKEN', 500, 'Error on refreshtoken', error))
   }
 }
 
@@ -137,6 +137,6 @@ export async function logout(req: Request, res: Response, next: NextFunction) {
 
     return res.status(200).send(true)
   } catch (error) {
-    next(new AppError('ERR_AUTH_LOGOUT', 500, 'Error on logout'))
+    next(new AppError('ERR_AUTH_LOGOUT', 500, 'Error on logout', error))
   }
 }
