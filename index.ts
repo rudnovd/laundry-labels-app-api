@@ -5,6 +5,7 @@ import fileUpload from 'express-fileupload'
 import jwt from 'express-jwt'
 import rateLimit from 'express-rate-limit'
 import helmet from 'helmet'
+import { StatusCodes } from 'http-status-codes'
 import 'module-alias/register'
 import mongoose from 'mongoose'
 import morgan from 'morgan'
@@ -75,7 +76,7 @@ app.use((error: AppError, _request: Request, res: Response, _next: NextFunction)
   if (originalError) logMessage += ` original stack: ${originalError.stack}`
 
   logger.error(logMessage)
-  res.status(error.status || 500).json({
+  res.status(error.status || StatusCodes.INTERNAL_SERVER_ERROR).json({
     error: {
       name: error.name,
       message: error.message,

@@ -2,6 +2,7 @@ import bcrypt from 'bcrypt'
 import { randomUUID } from 'crypto'
 import { NextFunction, Request, Response } from 'express'
 import { verify } from 'hcaptcha'
+import { StatusCodes } from 'http-status-codes'
 import { sign } from 'jsonwebtoken'
 import ms from 'ms'
 import { jwtSecret } from './config'
@@ -54,11 +55,16 @@ export async function registration(req: Request, res: Response, next: NextFuncti
 
   try {
     if (!email || !password) {
-      return next(new AppError('ERR_AUTH_REGISTARTION_NO_EMAIL_OR_PASSWORD', 400, `No email or password`))
+      return next(
+        new AppError('ERR_AUTH_REGISTARTION_NO_EMAIL_OR_PASSWORD', StatusCodes.BAD_REQUEST, `No email or password`)
+      )
     }
-    if (!token) return next(new AppError('ERR_AUTH_LOGIN_CAPTCHA_TOKEN_NOT_FOUND', 400, 'Captcha token not found'))
+    if (!token)
+      return next(
+        new AppError('ERR_AUTH_LOGIN_CAPTCHA_TOKEN_NOT_FOUND', StatusCodes.BAD_REQUEST, 'Captcha token not found')
+      )
     if (!(await verifyCaptcha(token)))
-      return next(new AppError('ERR_AUTH_LOGIN_CAPTCHA_WRONG_VERIFY', 400, 'Wrong captcha result'))
+      return next(new AppError('ERR_AUTH_LOGIN_CAPTCHA_WRONG_VERIFY', StatusCodes.BAD_REQUEST, 'Wrong captcha result'))
 
     const currentUser = await UserModel.find({ email })
     if (!currentUser.length) {
@@ -68,12 +74,14 @@ export async function registration(req: Request, res: Response, next: NextFuncti
         password,
       })
       const user = await newUser.save()
-      return res.status(200).send(user)
+      return res.status(StatusCodes.OK).send(user)
     } else {
-      return next(new AppError('ERR_AUTH_REGISTARTION_EMAIL_ALREADY_EXIST', 406, 'Email already exist'))
+      return next(
+        new AppError('ERR_AUTH_REGISTARTION_EMAIL_ALREADY_EXIST', StatusCodes.NOT_ACCEPTABLE, 'Email already exist')
+      )
     }
   } catch (error) {
-    next(new AppError('ERR_AUTH_REGISTARTION', 500, 'Error on registation', error))
+    next(new AppError('ERR_AUTH_REGISTARTION', StatusCodes.INTERNAL_SERVER_ERROR, 'Error on registation', error))
   }
 }
 
@@ -83,46 +91,85 @@ export async function login(req: Request, res: Response, next: NextFunction) {
   try {
     const user = await UserModel.findOne({ email }).select('+password').exec()
 
-    if (!user) return next(new AppError('ERR_AUTH_LOGIN_USER_NOT_FOUND', 500, 'User not found'))
-    if (!token) return next(new AppError('ERR_AUTH_LOGIN_CAPTCHA_TOKEN_NOT_FOUND', 500, 'Captcha token not found'))
+    if (!user)
+      return next(new AppError('ERR_AUTH_LOGIN_USER_NOT_FOUND', StatusCodes.INTERNAL_SERVER_ERROR, 'User not found'))
+    if (!token)
+      return next(
+        new AppError(
+          'ERR_AUTH_LOGIN_CAPTCHA_TOKEN_NOT_FOUND',
+          StatusCodes.INTERNAL_SERVER_ERROR,
+          'Captcha token not found'
+        )
+      )
     if (!(await verifyCaptcha(token)))
-      return next(new AppError('ERR_AUTH_LOGIN_CAPTCHA_WRONG_VERIFY', 500, 'Wrong captcha result'))
+      return next(
+        new AppError('ERR_AUTH_LOGIN_CAPTCHA_WRONG_VERIFY', StatusCodes.INTERNAL_SERVER_ERROR, 'Wrong captcha result')
+      )
 
     if (await bcrypt.compare(password, user.password)) {
       const { token, expiresIn } = await createRefreshToken({ user })
       res.cookie('refreshToken', token, { httpOnly: true, expires: new Date(expiresIn) })
-      res.status(200).send({
+      res.status(StatusCodes.OK).send({
         user: await UserModel.findOne({ email }),
         accessToken: createAccessToken(req, { user }),
         refreshToken,
       })
     } else {
-      return next(new AppError('ERR_AUTH_LOGIN_WRONG_EMAIL_OR_PASSWORD', 500, 'Wrong email or password'))
+      return next(
+        new AppError(
+          'ERR_AUTH_LOGIN_WRONG_EMAIL_OR_PASSWORD',
+          StatusCodes.INTERNAL_SERVER_ERROR,
+          'Wrong email or password'
+        )
+      )
     }
   } catch (error) {
-    next(new AppError('ERR_AUTH_LOGIN', 500, 'Error on login', error))
+    next(new AppError('ERR_AUTH_LOGIN', StatusCodes.INTERNAL_SERVER_ERROR, 'Error on login', error))
   }
 }
 
 export async function refreshToken(req: Request, res: Response, next: NextFunction) {
   if (!req.cookies)
-    return next(new AppError('ERR_AUTH_REFRESHTOKEN_COOKIE_REQUIRED', 500, '"refreshToken" cookie required'))
+    return next(
+      new AppError(
+        'ERR_AUTH_REFRESHTOKEN_COOKIE_REQUIRED',
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        '"refreshToken" cookie required'
+      )
+    )
   const { refreshToken } = req.cookies
 
   if (!refreshToken)
-    return next(new AppError('ERR_AUTH_REFRESHTOKEN_REFRESHTOKEN_NOT_FOUND', 500, 'Refresh token not found'))
+    return next(
+      new AppError(
+        'ERR_AUTH_REFRESHTOKEN_REFRESHTOKEN_NOT_FOUND',
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        'Refresh token not found'
+      )
+    )
 
   try {
     const token = await RefreshTokenModel.findOne({ token: refreshToken })
     if (!token)
-      return next(new AppError('ERR_AUTH_REFRESHTOKEN_REFRESHTOKEN_NOT_FOUND', 500, 'Refresh token not found'))
+      return next(
+        new AppError(
+          'ERR_AUTH_REFRESHTOKEN_REFRESHTOKEN_NOT_FOUND',
+          StatusCodes.INTERNAL_SERVER_ERROR,
+          'Refresh token not found'
+        )
+      )
 
     await RefreshTokenModel.deleteOne({ token: token.token })
     if (token.expiresIn < new Date().getTime())
-      return next(new AppError('ERR_AUTH_REFRESHTOKEN_TOKEN_EXPIRED', 500, 'Token expired'))
+      return next(
+        new AppError('ERR_AUTH_REFRESHTOKEN_TOKEN_EXPIRED', StatusCodes.INTERNAL_SERVER_ERROR, 'Token expired')
+      )
 
     const user = await UserModel.findOne({ _id: token.userId })
-    if (!user) return next(new AppError('ERR_AUTH_REFRESHTOKEN_USER_NOT_FOUND', 500, 'User not found'))
+    if (!user)
+      return next(
+        new AppError('ERR_AUTH_REFRESHTOKEN_USER_NOT_FOUND', StatusCodes.INTERNAL_SERVER_ERROR, 'User not found')
+      )
 
     const newRefreshToken = await createRefreshToken({ user })
 
@@ -130,30 +177,37 @@ export async function refreshToken(req: Request, res: Response, next: NextFuncti
       httpOnly: true,
       expires: new Date(newRefreshToken.expiresIn),
     })
-    return res.status(200).send({
+    return res.status(StatusCodes.OK).send({
       user,
       accessToken: createAccessToken(req, { user }),
       refreshToken: newRefreshToken.token,
     })
   } catch (error) {
-    next(new AppError('ERR_AUTH_REFRESHTOKEN', 500, 'Error on refreshtoken', error))
+    next(new AppError('ERR_AUTH_REFRESHTOKEN', StatusCodes.INTERNAL_SERVER_ERROR, 'Error on refreshtoken', error))
   }
 }
 
 export async function logout(req: Request, res: Response, next: NextFunction) {
-  if (!req.cookies) return next(new AppError('ERR_AUTH_LOGOUT', 500, '"refreshToken" cookie required'))
+  if (!req.cookies)
+    return next(new AppError('ERR_AUTH_LOGOUT', StatusCodes.INTERNAL_SERVER_ERROR, '"refreshToken" cookie required'))
   const { refreshToken } = req.cookies
 
   try {
     const token = await RefreshTokenModel.findOne({ token: refreshToken })
     if (!token) {
-      return next(new AppError('ERR_AUTH_LOGOUT_REFRESHTOKEN_NOT_FOUND', 500, 'Refresh token not found'))
+      return next(
+        new AppError(
+          'ERR_AUTH_LOGOUT_REFRESHTOKEN_NOT_FOUND',
+          StatusCodes.INTERNAL_SERVER_ERROR,
+          'Refresh token not found'
+        )
+      )
     }
 
     await RefreshTokenModel.deleteOne({ token: token.token })
 
-    return res.status(200).send(true)
+    return res.status(StatusCodes.OK).send(true)
   } catch (error) {
-    next(new AppError('ERR_AUTH_LOGOUT', 500, 'Error on logout', error))
+    next(new AppError('ERR_AUTH_LOGOUT', StatusCodes.INTERNAL_SERVER_ERROR, 'Error on logout', error))
   }
 }
