@@ -1,6 +1,7 @@
 import bcrypt from 'bcrypt'
 import { randomUUID } from 'crypto'
 import { NextFunction, Request, Response } from 'express'
+import { verify } from 'hcaptcha'
 import { sign } from 'jsonwebtoken'
 import ms from 'ms'
 import { jwtSecret } from './config'
@@ -38,13 +39,26 @@ function createAccessToken(req: Request, payload: { user: User }) {
   })
 }
 
+async function verifyCaptcha(token: string): Promise<Boolean> {
+  if (!process.env.CAPTCHA_SECRET_KEY) throw new Error('process.env.CAPTCHA_SECRET_KEY not found')
+  try {
+    const verificationResult = await verify(process.env.CAPTCHA_SECRET_KEY, token)
+    return verificationResult.success
+  } catch {
+    return false
+  }
+}
+
 export async function registration(req: Request, res: Response, next: NextFunction) {
-  let { email, password } = req.body
+  let { email, password, token } = req.body
 
   try {
     if (!email || !password) {
       return next(new AppError('ERR_AUTH_REGISTARTION_NO_EMAIL_OR_PASSWORD', 400, `No email or password`))
     }
+    if (!token) return next(new AppError('ERR_AUTH_LOGIN_CAPTCHA_TOKEN_NOT_FOUND', 400, 'Captcha token not found'))
+    if (!(await verifyCaptcha(token)))
+      return next(new AppError('ERR_AUTH_LOGIN_CAPTCHA_WRONG_VERIFY', 400, 'Wrong captcha result'))
 
     const currentUser = await UserModel.find({ email })
     if (!currentUser.length) {
@@ -64,12 +78,15 @@ export async function registration(req: Request, res: Response, next: NextFuncti
 }
 
 export async function login(req: Request, res: Response, next: NextFunction) {
-  const { email, password } = req.body
+  const { email, password, token } = req.body
 
   try {
     const user = await UserModel.findOne({ email }).select('+password').exec()
 
-    if (!user) return next(new AppError('ERR_AUTH_LOGIN_USER_NOT_FOUND', 401, 'User not found'))
+    if (!user) return next(new AppError('ERR_AUTH_LOGIN_USER_NOT_FOUND', 500, 'User not found'))
+    if (!token) return next(new AppError('ERR_AUTH_LOGIN_CAPTCHA_TOKEN_NOT_FOUND', 500, 'Captcha token not found'))
+    if (!(await verifyCaptcha(token)))
+      return next(new AppError('ERR_AUTH_LOGIN_CAPTCHA_WRONG_VERIFY', 500, 'Wrong captcha result'))
 
     if (await bcrypt.compare(password, user.password)) {
       const { token, expiresIn } = await createRefreshToken({ user })
@@ -80,7 +97,7 @@ export async function login(req: Request, res: Response, next: NextFunction) {
         refreshToken,
       })
     } else {
-      return next(new AppError('ERR_AUTH_LOGIN_WRONG_EMAIL_OR_PASSWORD', 401, 'Wrong email or password'))
+      return next(new AppError('ERR_AUTH_LOGIN_WRONG_EMAIL_OR_PASSWORD', 500, 'Wrong email or password'))
     }
   } catch (error) {
     next(new AppError('ERR_AUTH_LOGIN', 500, 'Error on login', error))
@@ -93,19 +110,19 @@ export async function refreshToken(req: Request, res: Response, next: NextFuncti
   const { refreshToken } = req.cookies
 
   if (!refreshToken)
-    return next(new AppError('ERR_AUTH_REFRESHTOKEN_REFRESHTOKEN_NOT_FOUND', 401, 'Refresh token not found'))
+    return next(new AppError('ERR_AUTH_REFRESHTOKEN_REFRESHTOKEN_NOT_FOUND', 500, 'Refresh token not found'))
 
   try {
     const token = await RefreshTokenModel.findOne({ token: refreshToken })
     if (!token)
-      return next(new AppError('ERR_AUTH_REFRESHTOKEN_REFRESHTOKEN_NOT_FOUND', 401, 'Refresh token not found'))
+      return next(new AppError('ERR_AUTH_REFRESHTOKEN_REFRESHTOKEN_NOT_FOUND', 500, 'Refresh token not found'))
 
     await RefreshTokenModel.deleteOne({ token: token.token })
     if (token.expiresIn < new Date().getTime())
       return next(new AppError('ERR_AUTH_REFRESHTOKEN_TOKEN_EXPIRED', 500, 'Token expired'))
 
     const user = await UserModel.findOne({ _id: token.userId })
-    if (!user) return next(new AppError('ERR_AUTH_REFRESHTOKEN_USER_NOT_FOUND', 401, 'User not found'))
+    if (!user) return next(new AppError('ERR_AUTH_REFRESHTOKEN_USER_NOT_FOUND', 500, 'User not found'))
 
     const newRefreshToken = await createRefreshToken({ user })
 
@@ -130,7 +147,7 @@ export async function logout(req: Request, res: Response, next: NextFunction) {
   try {
     const token = await RefreshTokenModel.findOne({ token: refreshToken })
     if (!token) {
-      return next(new AppError('ERR_AUTH_LOGOUT_REFRESHTOKEN_NOT_FOUND', 401, 'Refresh token not found'))
+      return next(new AppError('ERR_AUTH_LOGOUT_REFRESHTOKEN_NOT_FOUND', 500, 'Refresh token not found'))
     }
 
     await RefreshTokenModel.deleteOne({ token: token.token })
