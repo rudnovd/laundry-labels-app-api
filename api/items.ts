@@ -1,7 +1,8 @@
-import { AppError } from '@/error'
-import { ItemModel } from '@/models/item'
-import { redis } from '@/redis'
+import { AppError } from '##/error'
+import { ItemModel } from '##/models/item'
+import { redis } from '##/redis'
 import { NextFunction, Request, Response } from 'express'
+import fs from 'fs/promises'
 import { StatusCodes } from 'http-status-codes'
 
 export async function getItems(req: Request, res: Response, next: NextFunction) {
@@ -28,8 +29,6 @@ export async function postItem(req: Request, res: Response, next: NextFunction) 
   const { icons, images, tags } = req.body
 
   try {
-    if (images.length) images.map((image: Array<string>) => redis.del(image))
-
     const newItem = new ItemModel({
       icons,
       images,
@@ -37,9 +36,16 @@ export async function postItem(req: Request, res: Response, next: NextFunction) 
       owner: req.user?.data._id,
     })
 
-    await newItem.validate()
+    try {
+      await newItem.validate()
+    } catch (error) {
+      if (error instanceof Error)
+        return next(new AppError('ERR_POST_ITEM_VALIDATION', StatusCodes.INTERNAL_SERVER_ERROR, error.message))
+    }
 
     const item = await newItem.save()
+
+    images.map((image: Array<string>) => redis.del(image))
 
     return res.status(StatusCodes.OK).send(item)
   } catch (error) {
@@ -49,7 +55,7 @@ export async function postItem(req: Request, res: Response, next: NextFunction) 
 
 export async function editItem(req: Request, res: Response, next: NextFunction) {
   const { _id } = req.params
-  const { icons, images, tags } = req.body
+  const { icons, tags } = req.body
 
   try {
     const item = await ItemModel.findOne({ _id })
@@ -58,7 +64,7 @@ export async function editItem(req: Request, res: Response, next: NextFunction) 
       return next(
         new AppError('ERR_EDIT_ITEM_ITEM_NOT_FOUND', StatusCodes.INTERNAL_SERVER_ERROR, `Item with id ${_id} not found`)
       )
-    if (item.owner !== req.user?.data._id)
+    if (item.owner.toString() !== req.user?.data._id)
       return next(
         new AppError(
           'ERR_EDIT_ITEM_WRONG_OWNER',
@@ -67,11 +73,9 @@ export async function editItem(req: Request, res: Response, next: NextFunction) 
         )
       )
 
-    const newItem = item.update({
-      icons,
-      images,
-      tags,
-    })
+    await item.updateOne({ icons, tags })
+
+    const newItem = await ItemModel.findOne({ _id })
 
     return res.status(StatusCodes.OK).send(newItem)
   } catch (error) {
@@ -83,6 +87,18 @@ export async function deleteItem(req: Request, res: Response, next: NextFunction
   const { _id } = req.params
 
   try {
+    const item = await ItemModel.findOne({ _id, owner: req.user?.data._id })
+
+    if (!item) {
+      return next(
+        new AppError('ERR_DELETE_ITEM_NOT_FOUND', StatusCodes.INTERNAL_SERVER_ERROR, `Item with id ${_id} not found`)
+      )
+    }
+
+    if (item.images && item.images.length) {
+      item.images.map((image: string) => fs.rm(`${global.__basedir}/public/${image}`))
+    }
+
     await ItemModel.deleteOne({ _id, owner: req.user?.data._id })
 
     return res.status(StatusCodes.OK).send(true)

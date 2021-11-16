@@ -5,6 +5,7 @@ import { verify } from 'hcaptcha'
 import { StatusCodes } from 'http-status-codes'
 import { sign } from 'jsonwebtoken'
 import ms from 'ms'
+import validator from 'validator'
 import { jwtSecret } from './config'
 import { AppError } from './error'
 import { RefreshTokenModel } from './models/refreshTokens'
@@ -53,18 +54,31 @@ async function verifyCaptcha(token: string): Promise<Boolean> {
 export async function registration(req: Request, res: Response, next: NextFunction) {
   let { email, password, token } = req.body
 
+  if (!email || !password) {
+    return next(new AppError('ERR_AUTH_REGISTARTION_VALIDATION', StatusCodes.BAD_REQUEST, `No email or password`))
+  }
+
+  if (!validator.isEmail(email)) {
+    return next(new AppError('ERR_AUTH_REGISTARTION_VALIDATION', StatusCodes.BAD_REQUEST, `Wrong email format`))
+  } else if (!validator.isStrongPassword(password, { minLength: 6 })) {
+    return next(
+      new AppError('ERR_AUTH_REGISTARTION_VALIDATION', StatusCodes.BAD_REQUEST, `Password must be more than 5 symbols`)
+    )
+  }
+
   try {
-    if (!email || !password) {
-      return next(
-        new AppError('ERR_AUTH_REGISTARTION_NO_EMAIL_OR_PASSWORD', StatusCodes.BAD_REQUEST, `No email or password`)
-      )
+    if (process.env.NODE_ENV !== 'development') {
+      if (!token) {
+        return next(
+          new AppError('ERR_AUTH_LOGIN_CAPTCHA_TOKEN_NOT_FOUND', StatusCodes.BAD_REQUEST, 'Captcha token not found')
+        )
+      }
+      if (!(await verifyCaptcha(token))) {
+        return next(
+          new AppError('ERR_AUTH_LOGIN_CAPTCHA_WRONG_VERIFY', StatusCodes.BAD_REQUEST, 'Wrong captcha result')
+        )
+      }
     }
-    if (!token)
-      return next(
-        new AppError('ERR_AUTH_LOGIN_CAPTCHA_TOKEN_NOT_FOUND', StatusCodes.BAD_REQUEST, 'Captcha token not found')
-      )
-    if (!(await verifyCaptcha(token)))
-      return next(new AppError('ERR_AUTH_LOGIN_CAPTCHA_WRONG_VERIFY', StatusCodes.BAD_REQUEST, 'Wrong captcha result'))
 
     const currentUser = await UserModel.find({ email })
     if (!currentUser.length) {
@@ -88,23 +102,34 @@ export async function registration(req: Request, res: Response, next: NextFuncti
 export async function login(req: Request, res: Response, next: NextFunction) {
   const { email, password, token } = req.body
 
+  if (!validator.isEmail(email)) {
+    return next(new AppError('ERR_AUTH_REGISTARTION_VALIDATION', StatusCodes.BAD_REQUEST, `Wrong email format`))
+  } else if (!password) {
+    return next(new AppError('ERR_AUTH_REGISTARTION_VALIDATION', StatusCodes.BAD_REQUEST, `Password is required`))
+  }
+
   try {
     const user = await UserModel.findOne({ email }).select('+password').exec()
 
     if (!user)
       return next(new AppError('ERR_AUTH_LOGIN_USER_NOT_FOUND', StatusCodes.INTERNAL_SERVER_ERROR, 'User not found'))
-    if (!token)
-      return next(
-        new AppError(
-          'ERR_AUTH_LOGIN_CAPTCHA_TOKEN_NOT_FOUND',
-          StatusCodes.INTERNAL_SERVER_ERROR,
-          'Captcha token not found'
+
+    if (process.env.NODE_ENV !== 'development') {
+      if (!token) {
+        return next(
+          new AppError(
+            'ERR_AUTH_LOGIN_CAPTCHA_TOKEN_NOT_FOUND',
+            StatusCodes.INTERNAL_SERVER_ERROR,
+            'Captcha token not found'
+          )
         )
-      )
-    if (!(await verifyCaptcha(token)))
-      return next(
-        new AppError('ERR_AUTH_LOGIN_CAPTCHA_WRONG_VERIFY', StatusCodes.INTERNAL_SERVER_ERROR, 'Wrong captcha result')
-      )
+      }
+      if (!(await verifyCaptcha(token))) {
+        return next(
+          new AppError('ERR_AUTH_LOGIN_CAPTCHA_WRONG_VERIFY', StatusCodes.INTERNAL_SERVER_ERROR, 'Wrong captcha result')
+        )
+      }
+    }
 
     if (await bcrypt.compare(password, user.password)) {
       const { token, expiresIn } = await createRefreshToken({ user })

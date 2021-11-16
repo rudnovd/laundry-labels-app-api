@@ -15,7 +15,7 @@ const schema = new Schema(
       required: true,
       validate: {
         validator: (value: unknown) => Array.isArray(value) && value.length,
-        message: 'icons field required',
+        message: 'field must be not empty type "Array"',
       },
     },
     images: Array,

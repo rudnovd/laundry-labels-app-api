@@ -1,4 +1,5 @@
 import { CronJob } from 'cron'
+import fs from 'fs/promises'
 import { createClient } from 'redis'
 import { logger } from './logger'
 
@@ -16,18 +17,25 @@ redis.clientId().then((clientId) => {
     '*/31 * * * *',
     async () => {
       logger.info('Redis: cron function "redisCleanImagesJob" is running now!')
+      let count = 0
       const keys = await redis.keys('*')
       const values = keys.map((key) => redis.get(key))
       Promise.all(values).then((values) => {
         values.forEach((value, index) => {
           if (value && Date.now() > parseInt(value)) {
+            const filePath = `${keys[index]}`
             redis.del(keys[index])
+            fs.access(filePath).then(() => fs.rm(filePath))
+            count++
           }
         })
       })
-      logger.info('Redis: cron function "redisCleanImagesJob" is successfully completed.')
+      logger.info(`Redis: cron function "redisCleanImagesJob" is successfully completed. Deleted count: ${count}`)
     },
     null,
+    true,
+    undefined,
+    undefined,
     true
   )
   redisCleanImagesJob.start()
