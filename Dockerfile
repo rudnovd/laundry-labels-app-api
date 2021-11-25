@@ -6,4 +6,3 @@ USER node
 RUN npm ci
 RUN npm run build
 COPY --chown=node:node . .
-RUN rm *.ts

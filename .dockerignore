@@ -8,3 +8,7 @@ docker-compose.*.yml
 .dockerignore
 .env-example
 .gitignore
+*.md
+nodemon.json
+.env
+*.postman_collection.json

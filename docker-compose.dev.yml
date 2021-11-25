@@ -2,7 +2,8 @@ version: '3.9'
 services:
   mongodb:
     image: mongo:latest
-    container_name: laundry-labels-app-server-mongodb-dev
+    container_name: laundry-labels-app-server-mongodb
+    hostname: mongodb-host
     env_file:
       - .env
     environment:
@@ -10,18 +11,48 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: ${DATABASE_PASSWORD}
     ports:
       - 27017:27017
+    volumes:
+      - mongodb-volume:/data/db
     networks:
       - main-network
   redis:
     image: redis:alpine
-    container_name: laundry-labels-app-server-redis-dev
+    container_name: laundry-labels-app-server-redis
     ports:
       - 6379:6379
     volumes:
-      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
+      - ./docker/redis/redis.conf:/usr/local/etc/redis/redis.conf
     networks:
       - main-network
     command: redis-server /usr/local/etc/redis/
+  app:
+    container_name: laundry-labels-app-server-app
+    restart: always
+    build: .
+    command: npm run production
+    env_file:
+      - .env
+    ports:
+      - ${APP_PORT}:${APP_PORT}
+    depends_on:
+      - mongodb
+      - redis
+    volumes:
+      - app-container:/app
+    networks:
+      - main-network
+    environment:
+      APP_PORT: ${APP_PORT}
+      DATABASE_URL: mongodb://mongodb-host:27017
+      DATABASE_NAME: ${DATABASE_NAME}
+      DATABASE_USER: ${DATABASE_USER}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+
+volumes:
+  mongodb-volume:
+  redis-container:
+  app-container:
 
 networks:
   main-network:
