@@ -7,3 +7,4 @@ dhparam/*
 nginx-conf/nginx.conf
 public
 *.pem
+src/logs
