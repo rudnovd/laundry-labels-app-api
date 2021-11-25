@@ -12,17 +12,18 @@
     "experimentalDecorators": true,
     "types": [
       "@types/node",
-      "./types/server"
+      "./src/types/server"
     ],
     "paths": {
       "##/*": [
-        "./*"
+        "./src/*"
       ],
     },
+    "rootDir": "src",
     "outDir": "dist"
   },
   "include": [
-    "**/*.ts"
+    "./src/**/*.ts",
   ],
   "exclude": [
     "node_modules"

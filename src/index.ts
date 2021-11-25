@@ -1,6 +1,11 @@
+import { jwtSecret } from '##/config'
+import { AppError } from '##/error'
+import { logger } from '##/logger'
+import '##/redis'
+import { apiRouter, authRouter, uploadRouter } from '##/router'
 import { json, urlencoded } from 'body-parser'
 import cookieParser from 'cookie-parser'
-import express, { NextFunction, Request, Response } from 'express'
+import express, { Request, Response } from 'express'
 import fileUpload from 'express-fileupload'
 import jwt from 'express-jwt'
 import rateLimit from 'express-rate-limit'
@@ -10,11 +15,6 @@ import mongoose from 'mongoose'
 import morgan from 'morgan'
 import ms from 'ms'
 import path from 'path'
-import { jwtSecret } from './config'
-import { AppError } from './error'
-import { logger } from './logger'
-import './redis'
-import { apiRouter, authRouter, uploadRouter } from './router'
 
 global.__basedir = path.dirname(__filename)
 
@@ -68,10 +68,10 @@ app
   .use('/upload', uploadRouter)
   .use('/api', apiRouter)
 
-app.use((error: AppError, _request: Request, res: Response, _next: NextFunction) => {
+app.use((error: AppError, _request: Request, res: Response) => {
   let logMessage = `Code: ${error.name}; message: ${error.message};`
 
-  let originalError = (error.originalError as Error) || ''
+  const originalError = (error.originalError as Error) || ''
   if (originalError) logMessage += ` original stack: ${originalError.stack}`
 
   logger.error(logMessage)

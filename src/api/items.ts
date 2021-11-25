@@ -7,7 +7,7 @@ import { StatusCodes } from 'http-status-codes'
 
 export async function getItems(req: Request, res: Response, next: NextFunction) {
   try {
-    let items = await ItemModel.find({ owner: req.user?.data._id }).select('-owner').exec()
+    const items = await ItemModel.find({ owner: req.user?.data._id }).select('-owner').exec()
 
     res.status(StatusCodes.OK).send(items)
   } catch (error) {
@@ -17,7 +17,7 @@ export async function getItems(req: Request, res: Response, next: NextFunction) 
 
 export async function getItemById(req: Request, res: Response, next: NextFunction) {
   try {
-    let item = await ItemModel.findOne({ _id: req.params._id, owner: req.user?.data._id }).select('-owner').exec()
+    const item = await ItemModel.findOne({ _id: req.params._id, owner: req.user?.data._id }).select('-owner').exec()
 
     res.status(StatusCodes.OK).send(item)
   } catch (error) {

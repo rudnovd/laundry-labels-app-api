@@ -1,7 +1,7 @@
+import { logger } from '##/logger'
 import { CronJob } from 'cron'
 import fs from 'fs/promises'
 import { createClient } from 'redis'
-import { logger } from './logger'
 
 export const redis = createClient()
 redis.on('error', async (err) => {
@@ -36,7 +36,7 @@ redis.clientId().then((clientId) => {
     true,
     undefined,
     undefined,
-    true
+    process.env.NODE_ENV === 'development'
   )
   redisCleanImagesJob.start()
   logger.info('Redis: active cron functions: redisCleanImagesJob')

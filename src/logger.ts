@@ -16,6 +16,7 @@ export const logger = winston.createLogger({
         winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss:ms' }),
         winston.format.printf((info) => `${info.timestamp} ${info.level}: ${info.message}`)
       ),
+      maxsize: 104857600,
     }),
   ],
 })

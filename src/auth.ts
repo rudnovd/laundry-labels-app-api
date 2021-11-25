@@ -41,7 +41,7 @@ function createAccessToken(req: Request, payload: { user: User }) {
   })
 }
 
-async function verifyCaptcha(token: string): Promise<Boolean> {
+async function verifyCaptcha(token: string): Promise<boolean> {
   if (!process.env.CAPTCHA_SECRET_KEY) throw new Error('process.env.CAPTCHA_SECRET_KEY not found')
   try {
     const verificationResult = await verify(process.env.CAPTCHA_SECRET_KEY, token)
@@ -52,7 +52,8 @@ async function verifyCaptcha(token: string): Promise<Boolean> {
 }
 
 export async function registration(req: Request, res: Response, next: NextFunction) {
-  let { email, password, token } = req.body
+  const { email, token } = req.body
+  let { password } = req.body
 
   if (!email || !password) {
     return next(new AppError('ERR_AUTH_REGISTARTION_VALIDATION', StatusCodes.BAD_REQUEST, `No email or password`))
