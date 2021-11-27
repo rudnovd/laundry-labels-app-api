@@ -1,11 +1,11 @@
 {
   "restartable": "rs",
-  "ignore": [".git", "node_modules/**/node_modules", "dist", "dhparam", "logs", "nginx-conf", "redis"],
+  "ignore": [".git", "node_modules/**/node_modules", "docker", "dist"],
   "verbose": true,
-  "exec": "ts-node index.ts",
-  "watch": [".", "api", "models"],
+  "exec": "tsc && node dist/index.js",
+  "watch": ["src"],
   "env": {
     "NODE_ENV": "development"
   },
-  "ext": "js,json,ts"
+  "ext": "ts"
 }
