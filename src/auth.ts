@@ -89,7 +89,13 @@ export async function registration(req: Request, res: Response, next: NextFuncti
         password,
       })
       const user = await newUser.save()
-      return res.status(StatusCodes.OK).send(user)
+      const { token, expiresIn } = await createRefreshToken({ user })
+      res.cookie('refreshToken', token, { httpOnly: true, expires: new Date(expiresIn) })
+      res.status(StatusCodes.OK).send({
+        user,
+        accessToken: createAccessToken(req, { user }),
+        refreshToken,
+      })
     } else {
       return next(
         new AppError('ERR_AUTH_REGISTARTION_EMAIL_ALREADY_EXIST', StatusCodes.NOT_ACCEPTABLE, 'Email already exist')
