@@ -2,18 +2,21 @@ import { AppError } from '##/error'
 import { redis } from '##/redis'
 import { randomUUID } from 'crypto'
 import { NextFunction, Request, Response } from 'express'
+import { constants } from 'fs'
+import fs from 'fs/promises'
 import { StatusCodes } from 'http-status-codes'
 import ms from 'ms'
 
 export async function getItemImage(req: Request, res: Response, next: NextFunction) {
   try {
+    await fs.access(`${global.__basedir}/public/upload/items/${req.params.file}`, constants.F_OK)
     res.sendFile(`${global.__basedir}/public/upload/items/${req.params.file}`)
   } catch (error) {
     next(
       new AppError(
-        'ERR_UPLOAD_GET_ITEM_IMAGE',
+        'ERR_UPLOAD_GET_ITEM_IMAGE_NOT_FOUND',
         StatusCodes.INTERNAL_SERVER_ERROR,
-        'Server cannot send this image',
+        'Image with current id not found',
         error
       )
     )
