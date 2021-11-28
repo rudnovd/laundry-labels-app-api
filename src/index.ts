@@ -5,7 +5,7 @@ import '##/redis'
 import { apiRouter, authRouter, uploadRouter } from '##/router'
 import { json, urlencoded } from 'body-parser'
 import cookieParser from 'cookie-parser'
-import express, { Request, Response } from 'express'
+import express, { NextFunction, Request, Response } from 'express'
 import fileUpload from 'express-fileupload'
 import jwt from 'express-jwt'
 import rateLimit from 'express-rate-limit'
@@ -68,7 +68,8 @@ app
   .use('/upload', uploadRouter)
   .use('/api', apiRouter)
 
-app.use((error: AppError, _request: Request, res: Response) => {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+app.use((error: AppError, _request: Request, res: Response, _: NextFunction) => {
   let logMessage = `Code: ${error.name}; message: ${error.message};`
 
   const originalError = (error.originalError as Error) || ''
