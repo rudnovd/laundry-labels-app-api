@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.0.0-alpha.0](https://github.com/rudnovd/laundry-labels-app-api/compare/v0.0.0...v0.0.0-alpha.0) (2021-11-28)
+
+
+### Features
+
+* **auth:** generate tokens in registation route ([239ce91](https://github.com/rudnovd/laundry-labels-app-api/commit/239ce91322e1bb837c19801636c407378f4577bc))
+
+
+### Bug Fixes
+
+* **auth:** registration password validation ([a0cbc55](https://github.com/rudnovd/laundry-labels-app-api/commit/a0cbc55e4dd37b953b471ef409d2e75e450ff895))
+
 ## 0.0.0 (2021-11-27)
 
 
