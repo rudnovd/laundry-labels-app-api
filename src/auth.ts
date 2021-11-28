@@ -61,7 +61,7 @@ export async function registration(req: Request, res: Response, next: NextFuncti
 
   if (!validator.isEmail(email)) {
     return next(new AppError('ERR_AUTH_REGISTARTION_VALIDATION', StatusCodes.BAD_REQUEST, `Wrong email format`))
-  } else if (!validator.isStrongPassword(password, { minLength: 6 })) {
+  } else if (password.length < 5) {
     return next(
       new AppError('ERR_AUTH_REGISTARTION_VALIDATION', StatusCodes.BAD_REQUEST, `Password must be more than 5 symbols`)
     )
