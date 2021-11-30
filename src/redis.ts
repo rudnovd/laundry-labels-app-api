@@ -1,5 +1,6 @@
 import { logger } from '##/logger'
 import { CronJob } from 'cron'
+import { constants } from 'fs'
 import fs from 'fs/promises'
 import { createClient } from 'redis'
 
@@ -27,7 +28,9 @@ redis.clientId().then((clientId) => {
           if (value && Date.now() > parseInt(value)) {
             const filePath = `${keys[index]}`
             redis.del(keys[index])
-            fs.access(filePath).then(() => fs.rm(filePath))
+            fs.access(filePath, constants.F_OK)
+              .then(() => fs.rm(filePath))
+              .catch((error) => logger.error(error))
             count++
           }
         })
