@@ -1,6 +1,6 @@
 {
   "name": "laundry-labels-app-api",
-  "version": "0.0.0-alpha.0",
+  "version": "0.0.0-alpha.1",
   "private": "true",
   "repository": {
     "type": "git",
@@ -12,7 +12,7 @@
     "node": ">=16"
   },
   "scripts": {
-    "start": "tsc && node dist/index.js",
+    "start": "ts-node src/index.ts",
     "dev": "nodemon",
     "build": "tsc -b && tsc",
     "lint": "eslint . --ext .ts",
