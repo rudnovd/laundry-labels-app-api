@@ -18,7 +18,12 @@ import path from 'path'
 
 global.__basedir = path.dirname(__filename)
 
-if (process.env.DATABASE_URL) {
+if (process.env.DATABASE_URI) {
+  mongoose
+    .connect(process.env.DATABASE_URI as string)
+    .then(() => logger.info(`Server: connected to database`))
+    .catch((error) => logger.error(`Server: ${error}`))
+} else if (process.env.DATABASE_URL) {
   mongoose
     .connect(process.env.DATABASE_URL as string, {
       authSource: 'admin',

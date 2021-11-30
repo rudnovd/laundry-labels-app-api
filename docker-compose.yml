@@ -59,6 +59,7 @@ services:
     environment:
       APP_PORT: ${APP_PORT}
       DATABASE_URL: mongodb://mongodb-host:27017
+      DATABASE_URI: ${DATABASE_URI}
       DATABASE_NAME: ${DATABASE_NAME}
       DATABASE_USER: ${DATABASE_USER}
       DATABASE_PASSWORD: ${DATABASE_PASSWORD}
