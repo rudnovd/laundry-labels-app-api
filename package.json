@@ -14,7 +14,7 @@
   "scripts": {
     "start": "tsc && node dist/index.js",
     "dev": "nodemon",
-    "build": "tsc -b --clean && tsc",
+    "build": "tsc -b && tsc",
     "lint": "eslint . --ext .ts",
     "production": "pm2-runtime ./dist/ecosystem.config.js"
   },
