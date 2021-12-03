@@ -5,7 +5,7 @@ import fs from 'fs/promises'
 import { createClient } from 'redis'
 
 export const redis = createClient({
-  socket: { host: process.env.REDIS_HOST ? process.env.REDIS_HOST : 'redis', port: 6379 },
+  socket: { host: process.env.REDIS_HOST || 'localhost', port: 6379 },
 })
 redis.on('error', async (err) => {
   logger.log('Server: Redis Client - ', err)

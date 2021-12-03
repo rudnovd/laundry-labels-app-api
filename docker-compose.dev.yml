@@ -1,32 +1,38 @@
 version: '3.9'
 services:
-  mongodb:
+  mongodb-service-dev:
     image: mongo:latest
-    container_name: laundry-labels-app-server-mongodb-dev
+    container_name: laundry-labels-app-mongodb-dev
+    ports:
+      - 27017:27017
+    restart: unless-stopped
+    volumes:
+      - mongodb-volume:/data/db
+      - mongodb-volume:/data/configdb
+    networks:
+      - main-network
     env_file:
       - .env
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${DATABASE_USER}
       MONGO_INITDB_ROOT_PASSWORD: ${DATABASE_PASSWORD}
-    ports:
-      - 27017:27017
-    volumes:
-      - mongodb-volume-dev:/data/db
-    networks:
-      - main-network
-  redis:
+  redis-service-dev:
     image: redis:alpine
-    container_name: laundry-labels-app-server-redis-dev
+    container_name: laundry-labels-app-redis-dev
     ports:
       - 6379:6379
+    restart: unless-stopped
     volumes:
+      - redis-volume:/usr/local/etc/redis
+      - redis-volume:/data
       - ./docker/redis/redis.conf:/usr/local/etc/redis/redis.conf
     networks:
       - main-network
     command: redis-server /usr/local/etc/redis/
 
 volumes:
-  mongodb-volume-dev:
+  mongodb-volume:
+  redis-volume:
 
 networks:
   main-network:

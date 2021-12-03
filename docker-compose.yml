@@ -1,93 +1,95 @@
 version: '3.9'
 services:
-  nginx:
+  nginx-service:
     image: nginx:mainline-alpine
-    container_name: laundry-labels-app-server-nginx
-    restart: unless-stopped
+    container_name: laundry-labels-app-nginx
     ports:
       - '80:80'
       - '443:443'
+    restart: unless-stopped
     volumes:
-      - web-root:/var/www/html
       - ./docker/nginx-conf:/etc/nginx/conf.d
-      - certbot-etc:/etc/letsencrypt
-      - certbot-var:/var/lib/letsencrypt
-      - dhparam:/etc/ssl/certs
+      - certbot-etc-volume:/etc/letsencrypt
+      - certbot-var-volume:/var/lib/letsencrypt
+      - dhparam-volume:/etc/ssl/certs
     networks:
       - main-network
-  mongodb:
+  mongodb-service:
     image: mongo:latest
-    container_name: laundry-labels-app-server-mongodb
-    hostname: mongodb-host
+    container_name: laundry-labels-app-mongodb
+    ports:
+      - 27017:27017
+    restart: unless-stopped
+    volumes:
+      - mongodb-volume:/data/db
+      - mongodb-volume:/data/configdb
+    networks:
+      - main-network
     env_file:
       - .env
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${DATABASE_USER}
       MONGO_INITDB_ROOT_PASSWORD: ${DATABASE_PASSWORD}
-    ports:
-      - 27017:27017
-    volumes:
-      - mongodb-volume:/data/db
-    networks:
-      - main-network
-  redis:
+  redis-service:
     image: redis:alpine
-    container_name: laundry-labels-app-server-redis
+    container_name: laundry-labels-app-redis
     ports:
       - 6379:6379
+    restart: unless-stopped
     volumes:
+      - redis-volume:/usr/local/etc/redis
+      - redis-volume:/data
       - ./docker/redis/redis.conf:/usr/local/etc/redis/redis.conf
     networks:
       - main-network
     command: redis-server /usr/local/etc/redis/
-  app:
-    container_name: laundry-labels-app-server-app
+  app-service:
+    container_name: laundry-labels-app-api
+    ports:
+      - ${APP_PORT}:${APP_PORT}
     restart: always
+    volumes:
+      - app-volume:/app
+    networks:
+      - main-network
+    depends_on:
+      - mongodb-service
+      - redis-service
     build: .
     command: npm run production
     env_file:
       - .env
-    ports:
-      - ${APP_PORT}:${APP_PORT}
-    depends_on:
-      - mongodb
-      - redis
-    volumes:
-      - app-container:/app
-    networks:
-      - main-network
     environment:
       APP_PORT: ${APP_PORT}
-      DATABASE_URL: mongodb://mongodb-host:27017
+      DATABASE_URL: mongodb://mongodb-service
       DATABASE_URI: ${DATABASE_URI}
       DATABASE_NAME: ${DATABASE_NAME}
       DATABASE_USER: ${DATABASE_USER}
       DATABASE_PASSWORD: ${DATABASE_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
-  certbot:
+      REDIS_HOST: redis-service
+  certbot-service:
     image: certbot/certbot
-    container_name: laundry-labels-app-server-certbot
+    container_name: laundry-labels-app-certbot
+    volumes:
+      - certbot-etc-volume:/etc/letsencrypt
+      - certbot-var-volume:/var/lib/letsencrypt
+    depends_on:
+      - nginx-service
     env_file:
       - .env
     environment:
       EMAIL: ${EMAIL}
       DOMAINS_LIST: ${DOMAINS_LIST}
-    volumes:
-      - certbot-etc:/etc/letsencrypt
-      - certbot-var:/var/lib/letsencrypt
-      - web-root:/var/www/html
-    depends_on:
-      - nginx
     command: certonly --webroot --webroot-path=/var/www/html --email $EMAIL --agree-tos --no-eff-email --force-renewal -d $DOMAINS_LIST
 
 volumes:
   mongodb-volume:
-  redis-container:
-  app-container:
-  certbot-etc:
-  certbot-var:
-  web-root:
-  dhparam:
+  redis-volume:
+  app-volume:
+  certbot-etc-volume:
+  certbot-var-volume:
+  dhparam-volume:
     driver: local
     driver_opts:
       type: none
