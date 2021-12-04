@@ -1,10 +1,9 @@
-node_modules/
-dist/
 .vscode
 .env
 .idea
-dhparam/*
-nginx-conf/nginx.conf
+node_modules/
+dist/
 public
 *.pem
 src/logs
+docker/nginx-conf
