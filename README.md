@@ -24,7 +24,7 @@ Api repository of [laundrylabels.app](https://laundrylabels.app)
 ## Production
 
 1. Fill production values in .env
-1. Create dhparam key for cerbot SSL verification: `mkdir docker/certbot/dhparam && sudo openssl dhparam -out docker/certbot/dhparam/dhparam.pem 2048`
+1. Create dhparam key for cerbot SSL verification: `mkdir docker/certbot/dhparam && sudo openssl dhparam -out docker/certbot/dhparam/dhparam-2048.pem 2048`
 1. Edit nginx config: docker/nginx-conf/nginx.conf
 1. Run containers: `docker-compose up`
 
