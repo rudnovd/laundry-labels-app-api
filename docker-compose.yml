@@ -8,8 +8,8 @@ services:
       - '443:443'
     restart: unless-stopped
     volumes:
-      - web-root-volume:/var/www/html
-      - ./docker/nginx-conf:/etc/nginx/conf.d
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - letsencrypt-volume:/var/www/_letsencrypt
       - certbot-etc-volume:/etc/letsencrypt
       - certbot-var-volume:/var/lib/letsencrypt
       - dhparam-volume:/etc/ssl/certs
@@ -77,7 +77,7 @@ services:
     volumes:
       - certbot-etc-volume:/etc/letsencrypt
       - certbot-var-volume:/var/lib/letsencrypt
-      - web-root-volume:/var/www/html
+      - letsencrypt-volume:/var/www/_letsencrypt
     depends_on:
       - nginx-service
     env_file:
@@ -93,7 +93,7 @@ volumes:
   app-volume:
   certbot-etc-volume:
   certbot-var-volume:
-  web-root-volume:
+  letsencrypt-volume:
   dhparam-volume:
     driver: local
     driver_opts:
