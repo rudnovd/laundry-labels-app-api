@@ -9,8 +9,8 @@ import ms from 'ms'
 
 export async function getItemImage(req: Request, res: Response, next: NextFunction) {
   try {
-    await fs.access(`${global.__basedir}/public/upload/items/${req.params.file}`, constants.F_OK)
-    res.sendFile(`${global.__basedir}/public/upload/items/${req.params.file}`)
+    await fs.access(`${global.__basedir}/upload/items/${req.params.file}`, constants.F_OK)
+    res.sendFile(`${global.__basedir}/upload/items/${req.params.file}`)
   } catch (error) {
     next(
       new AppError(
@@ -47,7 +47,7 @@ export async function uploadItemImage(req: Request, res: Response, next: NextFun
 
     const fileName = randomUUID()
     const fileType = file.mimetype.split('/')[1]
-    const filePath = `${global.__basedir}/public/upload/items/${fileName}.${fileType}`
+    const filePath = `${global.__basedir}/upload/items/${fileName}.${fileType}`
     file.mv(filePath, (err) => {
       if (err && Object.keys(err).length) {
         return next(

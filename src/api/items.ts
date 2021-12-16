@@ -2,6 +2,7 @@ import { AppError } from '##/error'
 import { ItemModel } from '##/models/item'
 import { redis } from '##/redis'
 import { NextFunction, Request, Response } from 'express'
+import { constants } from 'fs'
 import fs from 'fs/promises'
 import { StatusCodes } from 'http-status-codes'
 
@@ -96,7 +97,11 @@ export async function deleteItem(req: Request, res: Response, next: NextFunction
     }
 
     if (item.images && item.images.length) {
-      item.images.map((image: string) => fs.rm(`${global.__basedir}/public/${image}`))
+      item.images.map((image: string) => {
+        fs.access(`${global.__basedir}/upload/items/${req.params.file}`, constants.F_OK).then(() =>
+          fs.rm(`${global.__basedir}/upload/${image}`)
+        )
+      })
     }
 
     await ItemModel.deleteOne({ _id, owner: req.user?.data._id })
