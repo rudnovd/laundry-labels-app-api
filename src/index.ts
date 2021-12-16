@@ -89,6 +89,7 @@ app.use((error: AppError, _request: Request, res: Response, _: NextFunction) => 
   })
 })
 
-app.listen(process.env.APP_PORT || 5000, () =>
+app.listen(process.env.APP_PORT || 5000, () => {
+  logger.info(`NODE_ENV: ${process.env.NODE_ENV}`)
   logger.info(`Server: The server is running on port ${process.env.APP_PORT}`)
-)
+})
