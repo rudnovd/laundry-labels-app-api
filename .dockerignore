@@ -5,6 +5,7 @@ node_modules
 dist
 Dockerfile
 docker-compose.*.yml
+docker-compose.yml
 .dockerignore
 .env-example
 .gitignore
@@ -12,3 +13,5 @@ docker-compose.*.yml
 nodemon.json
 .env
 *.postman_collection.json
+docker
+logs

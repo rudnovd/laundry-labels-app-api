@@ -8,6 +8,7 @@ services:
       - '443:443'
     restart: unless-stopped
     volumes:
+      - nginx-logs-volume:/var/log/nginx
       - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf
       - letsencrypt-volume:/var/www/_letsencrypt
       - certbot-etc-volume:/etc/letsencrypt
@@ -15,6 +16,22 @@ services:
       - dhparam-volume:/etc/ssl/certs
     networks:
       - main-network
+    depends_on:
+      - app-service
+  goaccess-service:
+    image: allinurl/goaccess:1.5.3
+    container_name: laundry-labels-app-goaccess
+    ports:
+      - 7890:7890
+    restart: unless-stopped
+    volumes:
+      - ./docker/goaccess/goaccess.conf:/etc/goaccess/goaccess.conf
+      - nginx-logs-volume:/etc/goaccess/logs
+    networks:
+      - main-network
+    depends_on:
+      - nginx-service
+    command: goaccess --no-global-config --config-file=/etc/goaccess/goaccess.conf
   mongodb-service:
     image: mongo:latest
     container_name: laundry-labels-app-mongodb
@@ -53,6 +70,8 @@ services:
     restart: always
     volumes:
       - app-volume:/app
+      - app-upload-volume:/home/node/app/dist/upload
+      - app-logs-volume:/home/node/app/dist/logs
     networks:
       - main-network
     depends_on:
@@ -63,13 +82,7 @@ services:
     env_file:
       - .env
     environment:
-      APP_PORT: ${APP_PORT}
       DATABASE_URL: mongodb://mongodb-service
-      DATABASE_URI: ${DATABASE_URI}
-      DATABASE_NAME: ${DATABASE_NAME}
-      DATABASE_USER: ${DATABASE_USER}
-      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
-      JWT_SECRET: ${JWT_SECRET}
       REDIS_HOST: redis-service
   certbot-service:
     image: certbot/certbot
@@ -94,6 +107,10 @@ volumes:
   certbot-etc-volume:
   certbot-var-volume:
   letsencrypt-volume:
+  nginx-logs-volume:
+  goaccess-volume:
+  app-upload-volume:
+  app-logs-volume:
   dhparam-volume:
     driver: local
     driver_opts:

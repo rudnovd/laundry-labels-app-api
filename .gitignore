@@ -6,4 +6,4 @@ dist/
 public
 *.pem
 src/logs
-docker/nginx-conf
+docker/nginx/*.conf
