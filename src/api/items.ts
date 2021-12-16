@@ -98,9 +98,7 @@ export async function deleteItem(req: Request, res: Response, next: NextFunction
 
     if (item.images && item.images.length) {
       item.images.map((image: string) => {
-        fs.access(`${global.__basedir}/upload/items/${req.params.file}`, constants.F_OK).then(() =>
-          fs.rm(`${global.__basedir}/upload/${image}`)
-        )
+        fs.access(`${global.__basedir}/${image}`, constants.F_OK).then(() => fs.rm(`${global.__basedir}/${image}`))
       })
     }
 
