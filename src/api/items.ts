@@ -8,9 +8,8 @@ import { StatusCodes } from 'http-status-codes'
 
 export async function getItems(req: Request, res: Response, next: NextFunction) {
   try {
-    const items = await ItemModel.find({ owner: req.user?.data._id }).select('-owner').exec()
-
-    res.status(StatusCodes.OK).send(items)
+    const items = await ItemModel.find({ owner: req.user?.data._id }, '-owner').lean()
+    res.send(items)
   } catch (error) {
     next(new AppError('ERR_GET_ITEMS', StatusCodes.INTERNAL_SERVER_ERROR, 'Server cannot receive items', error))
   }
