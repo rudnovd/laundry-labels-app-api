@@ -3,8 +3,8 @@ import { model, Schema } from 'mongoose'
 export interface Item {
   _id: string
   icons: Array<string>
-  images?: Array<string>
-  tags?: Array<string>
+  images: Array<string>
+  tags: Array<string>
   owner: string
 }
 
@@ -18,8 +18,14 @@ const schema = new Schema(
         message: 'field must be not empty type "Array"',
       },
     },
-    images: Array,
-    tags: Array,
+    images: {
+      type: Array,
+      required: true,
+    },
+    tags: {
+      type: Array,
+      required: true,
+    },
     owner: {
       type: Schema.Types.ObjectId,
       ref: 'User',
