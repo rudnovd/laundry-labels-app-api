@@ -17,9 +17,14 @@ export async function getItems(req: Request, res: Response, next: NextFunction) 
 
 export async function getItemById(req: Request, res: Response, next: NextFunction) {
   try {
-    const item = await ItemModel.findOne({ _id: req.params._id, owner: req.user?.data._id }).select('-owner').exec()
+    const item = await ItemModel.findOne({ _id: req.params._id, owner: req.user?.data._id }, '-owner').lean()
+    if (!item) {
+      return next(
+        new AppError('ERR_GET_ITEM_BY_ID_NOT_FOUND', StatusCodes.NOT_FOUND, `Item with id ${req.params._id} not found`)
+      )
+    }
 
-    res.status(StatusCodes.OK).send(item)
+    res.send(item)
   } catch (error) {
     next(new AppError('ERR_GET_ITEM_BY_ID', StatusCodes.INTERNAL_SERVER_ERROR, 'Server cannot current item', error))
   }
