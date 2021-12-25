@@ -7,3 +7,5 @@ public
 *.pem
 src/logs
 docker/nginx/*.conf
+*.log
+*.postman_collection.json
