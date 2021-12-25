@@ -1,6 +1,7 @@
-import { Schema, model } from 'mongoose'
+import { model, Schema } from 'mongoose'
 
 export interface RefreshToken {
+  _id: string
   userId: string
   token: string
   expiresIn: number
