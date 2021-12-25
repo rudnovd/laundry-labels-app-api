@@ -1,11 +1,12 @@
 import { jwtSecret } from '##/config'
-import { AppError } from '##/error'
+import type { AppError } from '##/error'
 import { logger } from '##/logger'
 import '##/redis'
 import { apiRouter, authRouter, uploadRouter } from '##/router'
 import { json, urlencoded } from 'body-parser'
 import cookieParser from 'cookie-parser'
-import express, { NextFunction, Request, Response } from 'express'
+import type { NextFunction, Request, Response } from 'express'
+import express from 'express'
 import fileUpload from 'express-fileupload'
 import jwt from 'express-jwt'
 import rateLimit from 'express-rate-limit'
@@ -41,14 +42,11 @@ if (process.env.DATABASE_URI) {
 
 const app = express()
 
+morgan.token('user', (req: Request) => (req.user?.data._id ? `user - ${req.user.data._id}` : ''))
 app
   .use(
-    morgan(':method :url :status - :response-time ms', {
+    morgan(':method :url :status - :response-time ms :user', {
       stream: { write: (message) => logger.http(message.substring(0, message.lastIndexOf('\n'))) },
-      skip: () => {
-        const env = process.env.NODE_ENV || 'development'
-        return env !== 'development'
-      },
     })
   )
   .use(urlencoded({ extended: true }))

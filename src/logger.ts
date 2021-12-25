@@ -1,4 +1,5 @@
 import winston from 'winston'
+import DailyRotateFile from 'winston-daily-rotate-file'
 
 export const logger = winston.createLogger({
   level: 'http',
@@ -6,17 +7,20 @@ export const logger = winston.createLogger({
     new winston.transports.Console({
       format: winston.format.combine(
         winston.format.colorize(),
-        winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss:ms' }),
+        winston.format.timestamp(),
         winston.format.printf((info) => `${info.timestamp} ${info.level}: ${info.message}`)
       ),
     }),
-    new winston.transports.File({
-      filename: './logs/all.log',
+    new DailyRotateFile({
+      datePattern: 'DD-MM-YYYY',
+      filename: '%DATE%.log',
+      dirname: process.env.NODE_ENV === 'development' ? './logs' : '/var/log/laundry-labels-app/api',
+      maxSize: '50mb',
+      maxFiles: '100d',
       format: winston.format.combine(
-        winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss:ms' }),
+        winston.format.timestamp(),
         winston.format.printf((info) => `${info.timestamp} ${info.level}: ${info.message}`)
       ),
-      maxsize: 104857600,
     }),
   ],
 })
