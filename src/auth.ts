@@ -220,8 +220,9 @@ export async function refreshToken(req: Request, res: Response, next: NextFuncti
 }
 
 export async function logout(req: Request, res: Response, next: NextFunction) {
-  if (!req.cookies)
+  if (!req.cookies) {
     return next(new AppError('ERR_AUTH_LOGOUT', StatusCodes.INTERNAL_SERVER_ERROR, '"refreshToken" cookie required'))
+  }
   const { refreshToken } = req.cookies
 
   try {
@@ -235,10 +236,9 @@ export async function logout(req: Request, res: Response, next: NextFunction) {
         )
       )
     }
+    await token.delete()
 
-    await RefreshTokenModel.deleteOne({ token: token.token })
-
-    return res.status(StatusCodes.OK).send(true)
+    return res.send(true)
   } catch (error) {
     next(new AppError('ERR_AUTH_LOGOUT', StatusCodes.INTERNAL_SERVER_ERROR, 'Error on logout', error))
   }
