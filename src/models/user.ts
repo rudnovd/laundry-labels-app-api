@@ -1,10 +1,12 @@
-import { Schema, model } from 'mongoose'
+import { model, Schema } from 'mongoose'
 
 export interface User {
   _id: string
   email: string
   password: string
-  created?: Date
+  isDisabled: boolean
+  createdAt: string
+  updatedAt: string
 }
 
 const schema = new Schema(
