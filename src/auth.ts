@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt'
 import { randomUUID } from 'crypto'
-import { NextFunction, Request, Response } from 'express'
+import type { NextFunction, Request, Response } from 'express'
 import { verify } from 'hcaptcha'
 import { StatusCodes } from 'http-status-codes'
 import { sign } from 'jsonwebtoken'
@@ -8,36 +8,29 @@ import ms from 'ms'
 import validator from 'validator'
 import { jwtSecret } from './config'
 import { AppError } from './error'
-import { RefreshTokenModel } from './models/refreshTokens'
-import { User, UserModel } from './models/user'
+import { RefreshToken, RefreshTokenModel } from './models/refreshTokens'
+import { UserModel } from './models/user'
 
-async function createRefreshToken(payload: { user: User }) {
+async function createRefreshToken(userId: string): Promise<RefreshToken> {
   try {
     const expiresDate = new Date().getTime() + ms('60 days')
-
-    const newRefreshToken = new RefreshTokenModel({
-      userId: payload.user._id,
+    const refreshToken = new RefreshTokenModel({
+      userId,
       token: randomUUID(),
       expiresIn: parseInt(expiresDate.toString()),
     })
-
-    const { token, expiresIn } = await newRefreshToken.save()
-
-    return {
-      token,
-      expiresIn,
-    }
+    return await refreshToken.save()
   } catch (error) {
     throw error
   }
 }
 
-function createAccessToken(req: Request, payload: { user: User }) {
-  return sign({ data: { _id: payload.user._id, email: payload.user.email } }, jwtSecret, {
+function createAccessToken(payload: { issuer: string; userId: string }) {
+  return sign({ data: { _id: payload.userId } }, jwtSecret, {
     algorithm: 'HS512',
     expiresIn: '30m',
-    issuer: req.hostname,
-    subject: payload.user._id.toString(),
+    issuer: payload.issuer,
+    subject: payload.userId,
   })
 }
 
@@ -52,13 +45,11 @@ async function verifyCaptcha(token: string): Promise<boolean> {
 }
 
 export async function registration(req: Request, res: Response, next: NextFunction) {
-  const { email, token } = req.body
-  let { password } = req.body
+  const { email, password, token } = req.body
 
   if (!email || !password) {
     return next(new AppError('ERR_AUTH_REGISTARTION_VALIDATION', StatusCodes.BAD_REQUEST, `No email or password`))
   }
-
   if (!validator.isEmail(email)) {
     return next(new AppError('ERR_AUTH_REGISTARTION_VALIDATION', StatusCodes.BAD_REQUEST, `Wrong email format`))
   } else if (password.length < 5) {
@@ -81,26 +72,26 @@ export async function registration(req: Request, res: Response, next: NextFuncti
       }
     }
 
-    const currentUser = await UserModel.find({ email })
-    if (!currentUser.length) {
-      password = await bcrypt.hash(password, 10)
-      const newUser = new UserModel({
-        email,
-        password,
-      })
-      const user = await newUser.save()
-      const { token, expiresIn } = await createRefreshToken({ user })
-      res.cookie('refreshToken', token, { httpOnly: true, expires: new Date(expiresIn) })
-      res.status(StatusCodes.OK).send({
-        user,
-        accessToken: createAccessToken(req, { user }),
-        refreshToken,
-      })
-    } else {
+    const currentUser = await UserModel.findOne({ email }).lean()
+    if (currentUser) {
       return next(
         new AppError('ERR_AUTH_REGISTARTION_EMAIL_ALREADY_EXIST', StatusCodes.NOT_ACCEPTABLE, 'Email already exist')
       )
     }
+
+    const newUser = new UserModel({
+      email,
+      password: await bcrypt.hash(password, 10),
+    })
+    const user = await newUser.save()
+
+    const newRefreshToken = await createRefreshToken(user._id)
+    res.cookie('refreshToken', newRefreshToken.token, { httpOnly: true, expires: new Date(newRefreshToken.expiresIn) })
+    res.send({
+      user,
+      accessToken: createAccessToken({ issuer: req.hostname, userId: user._id.toString() }),
+      refreshToken,
+    })
   } catch (error) {
     next(new AppError('ERR_AUTH_REGISTARTION', StatusCodes.INTERNAL_SERVER_ERROR, 'Error on registation', error))
   }
@@ -116,10 +107,8 @@ export async function login(req: Request, res: Response, next: NextFunction) {
   }
 
   try {
-    const user = await UserModel.findOne({ email }).select('+password').exec()
-
-    if (!user)
-      return next(new AppError('ERR_AUTH_LOGIN_USER_NOT_FOUND', StatusCodes.INTERNAL_SERVER_ERROR, 'User not found'))
+    const user = await UserModel.findOne({ email }, '+password').lean()
+    if (!user) return next(new AppError('ERR_AUTH_LOGIN_USER_NOT_FOUND', StatusCodes.NOT_FOUND, 'User not found'))
 
     if (process.env.NODE_ENV !== 'development') {
       if (!token) {
@@ -139,11 +128,19 @@ export async function login(req: Request, res: Response, next: NextFunction) {
     }
 
     if (await bcrypt.compare(password, user.password)) {
-      const { token, expiresIn } = await createRefreshToken({ user })
-      res.cookie('refreshToken', token, { httpOnly: true, expires: new Date(expiresIn) })
-      res.status(StatusCodes.OK).send({
-        user: await UserModel.findOne({ email }),
-        accessToken: createAccessToken(req, { user }),
+      const newRefreshToken = await createRefreshToken(user._id)
+      res.cookie('refreshToken', newRefreshToken.token, {
+        httpOnly: true,
+        expires: new Date(newRefreshToken.expiresIn),
+      })
+      console.log('user', user)
+
+      res.send({
+        user: {
+          _id: user._id,
+          isDisabled: user.isDisabled,
+        },
+        accessToken: createAccessToken({ issuer: req.hostname, userId: user._id.toString() }),
         refreshToken,
       })
     } else {
@@ -182,7 +179,7 @@ export async function refreshToken(req: Request, res: Response, next: NextFuncti
 
   try {
     const token = await RefreshTokenModel.findOne({ token: refreshToken })
-    if (!token)
+    if (!token) {
       return next(
         new AppError(
           'ERR_AUTH_REFRESHTOKEN_REFRESHTOKEN_NOT_FOUND',
@@ -190,28 +187,35 @@ export async function refreshToken(req: Request, res: Response, next: NextFuncti
           'Refresh token not found'
         )
       )
+    }
 
-    await RefreshTokenModel.deleteOne({ token: token.token })
-    if (token.expiresIn < new Date().getTime())
+    if (token.expiresIn < new Date().getTime()) {
+      token.delete()
       return next(
         new AppError('ERR_AUTH_REFRESHTOKEN_TOKEN_EXPIRED', StatusCodes.INTERNAL_SERVER_ERROR, 'Token expired')
       )
+    }
 
-    const user = await UserModel.findOne({ _id: token.userId })
-    if (!user)
+    const user = await UserModel.findOne({ _id: token.userId }).lean()
+    if (!user) {
       return next(
         new AppError('ERR_AUTH_REFRESHTOKEN_USER_NOT_FOUND', StatusCodes.INTERNAL_SERVER_ERROR, 'User not found')
       )
+    }
 
-    const newRefreshToken = await createRefreshToken({ user })
-
+    const newRefreshToken = await createRefreshToken(user._id)
     res.cookie('refreshToken', newRefreshToken.token, {
       httpOnly: true,
       expires: new Date(newRefreshToken.expiresIn),
     })
-    return res.status(StatusCodes.OK).send({
-      user,
-      accessToken: createAccessToken(req, { user }),
+    token.delete()
+
+    return res.send({
+      user: {
+        _id: user._id,
+        isDisabled: user.isDisabled,
+      },
+      accessToken: createAccessToken({ issuer: req.hostname, userId: user._id.toString() }),
       refreshToken: newRefreshToken.token,
     })
   } catch (error) {
