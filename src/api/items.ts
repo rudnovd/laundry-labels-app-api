@@ -42,17 +42,13 @@ export async function postItem(req: Request, res: Response, next: NextFunction) 
     })
 
     try {
-      await newItem.validate()
-    } catch (error) {
-      if (error instanceof Error)
-        return next(new AppError('ERR_POST_ITEM_VALIDATION', StatusCodes.INTERNAL_SERVER_ERROR, error.message))
+      const item = await newItem.save()
+      images.map((image: Array<string>) => redis.del(image))
+
+      return res.send(item)
+    } catch (error: any) {
+      return next(new AppError('ERR_POST_ITEM_VALIDATION', StatusCodes.INTERNAL_SERVER_ERROR, error.message))
     }
-
-    const item = await newItem.save()
-
-    images.map((image: Array<string>) => redis.del(image))
-
-    return res.status(StatusCodes.OK).send(item)
   } catch (error) {
     next(new AppError('ERR_POST_ITEM', StatusCodes.INTERNAL_SERVER_ERROR, 'Server cannot create new item', error))
   }
