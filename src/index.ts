@@ -69,7 +69,7 @@ app
   )
   .use('/auth', authRouter)
   .use('/upload', uploadRouter)
-  .use('/api', apiRouter)
+  .use(apiRouter)
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 app.use((error: AppError, _request: Request, res: Response, _: NextFunction) => {
