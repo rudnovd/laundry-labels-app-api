@@ -63,26 +63,9 @@ export async function editItem(req: Request, res: Response, next: NextFunction) 
   const { icons, tags } = req.body
 
   try {
-    const item = await ItemModel.findOne({ _id })
+    const updatedItem = await ItemModel.findOneAndUpdate({ _id, owner: req.user?.data._id }, { icons, tags })
 
-    if (!item)
-      return next(
-        new AppError('ERR_EDIT_ITEM_ITEM_NOT_FOUND', StatusCodes.INTERNAL_SERVER_ERROR, `Item with id ${_id} not found`)
-      )
-    if (item.owner.toString() !== req.user?.data._id)
-      return next(
-        new AppError(
-          'ERR_EDIT_ITEM_WRONG_OWNER',
-          StatusCodes.INTERNAL_SERVER_ERROR,
-          'Users can edit only their own items'
-        )
-      )
-
-    await item.updateOne({ icons, tags })
-
-    const newItem = await ItemModel.findOne({ _id })
-
-    return res.status(StatusCodes.OK).send(newItem)
+    return res.send(updatedItem)
   } catch (error) {
     next(new AppError('ERR_EDIT_ITEM', StatusCodes.INTERNAL_SERVER_ERROR, 'Server cannot edit current item', error))
   }
