@@ -92,23 +92,19 @@ export async function deleteItem(req: Request, res: Response, next: NextFunction
   const { _id } = req.params
 
   try {
-    const item = await ItemModel.findOne({ _id, owner: req.user?.data._id })
-
-    if (!item) {
-      return next(
-        new AppError('ERR_DELETE_ITEM_NOT_FOUND', StatusCodes.INTERNAL_SERVER_ERROR, `Item with id ${_id} not found`)
-      )
+    const deletedItem = await ItemModel.findOneAndRemove({ _id, owner: req.user?.data._id })
+    if (deletedItem) {
+      for (const image of deletedItem.images) {
+        try {
+          accessSync(`${global.__basedir}/${image}`, constants.F_OK)
+          rmSync(`${global.__basedir}/${image}`)
+        } catch (error) {
+          console.error(error)
+        }
+      }
     }
 
-    if (item.images && item.images.length) {
-      item.images.map((image: string) => {
-        fs.access(`${global.__basedir}/${image}`, constants.F_OK).then(() => fs.rm(`${global.__basedir}/${image}`))
-      })
-    }
-
-    await ItemModel.deleteOne({ _id, owner: req.user?.data._id })
-
-    return res.status(StatusCodes.OK).send(true)
+    return res.send(true)
   } catch (error) {
     next(new AppError('ERR_DELETE_ITEM', StatusCodes.INTERNAL_SERVER_ERROR, 'Server cannot delete current item', error))
   }
