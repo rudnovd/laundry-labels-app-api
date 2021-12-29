@@ -1,7 +1,7 @@
 import { AppError } from '##/error'
 import { redis } from '##/redis'
 import { randomUUID } from 'crypto'
-import { NextFunction, Request, Response } from 'express'
+import type { NextFunction, Request, Response } from 'express'
 import { constants } from 'fs'
 import fs from 'fs/promises'
 import { StatusCodes } from 'http-status-codes'
