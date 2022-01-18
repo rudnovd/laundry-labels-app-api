@@ -100,7 +100,7 @@ export async function registration(req: Request, res: Response, next: NextFuncti
 export async function login(req: Request, res: Response, next: NextFunction) {
   const { email, password, token } = req.body
 
-  if (!validator.isEmail(email)) {
+  if (!email || !validator.isEmail(email)) {
     return next(new AppError('ERR_AUTH_REGISTARTION_VALIDATION', StatusCodes.BAD_REQUEST, `Wrong email format`))
   } else if (!password) {
     return next(new AppError('ERR_AUTH_REGISTARTION_VALIDATION', StatusCodes.BAD_REQUEST, `Password is required`))
@@ -133,7 +133,6 @@ export async function login(req: Request, res: Response, next: NextFunction) {
         httpOnly: true,
         expires: new Date(newRefreshToken.expiresIn),
       })
-      console.log('user', user)
 
       res.send({
         user: {
