@@ -74,8 +74,8 @@ export async function deleteItem(req: Request, res: Response, next: NextFunction
     if (deletedItem) {
       for (const image of deletedItem.images) {
         try {
-          accessSync(`${global.__basedir}/${image}`, constants.F_OK)
-          rmSync(`${global.__basedir}/${image}`)
+          accessSync(`${global.__basedir}${image}`, constants.F_OK)
+          rmSync(`${global.__basedir}${image}`)
         } catch (error) {
           console.error(error)
         }
