@@ -2,7 +2,7 @@
   "restartable": "rs",
   "ignore": [".git", "node_modules/**/node_modules", "docker", "dist"],
   "verbose": true,
-  "exec": "tsc && node dist/index.js",
+  "exec": "ts-node src/index.ts",
   "watch": ["src"],
   "env": {
     "NODE_ENV": "development"
