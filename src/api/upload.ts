@@ -35,14 +35,6 @@ export async function uploadItemImage(req: Request, res: Response, next: NextFun
       return next(
         new AppError('ERR_UPLOAD_POST_ITEM_IMAGE_WRONG_FILE_TYPE', StatusCodes.INTERNAL_SERVER_ERROR, 'Wrong file type')
       )
-    } else if (file.size > 3 * 8 * 1024 * 1024) {
-      return next(
-        new AppError(
-          'ERR_UPLOAD_POST_ITEM_IMAGE_WRONG_FILE_SIZE',
-          StatusCodes.INTERNAL_SERVER_ERROR,
-          'Max file size is 3mb'
-        )
-      )
     }
 
     const fileName = randomUUID()

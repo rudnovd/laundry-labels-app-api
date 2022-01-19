@@ -52,7 +52,13 @@ app
   .use(urlencoded({ extended: true }))
   .use(json())
   .use(cookieParser())
-  .use(fileUpload({ createParentPath: true }))
+  .use(
+    fileUpload({
+      createParentPath: true,
+      abortOnLimit: true,
+      limits: { fileSize: 5 * 1024 * 1024 }, //5mb,
+    })
+  )
   .use(helmet())
   .use(
     rateLimit({
