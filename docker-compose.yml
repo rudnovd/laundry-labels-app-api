@@ -71,7 +71,7 @@ services:
     volumes:
       - app-volume:/app
       - app-upload-volume:/home/node/app/dist/upload
-      - app-logs-volume:/home/node/app/dist/logs
+      - app-logs-volume:/var/log/laundry-labels-app/api
     networks:
       - main-network
     depends_on:
