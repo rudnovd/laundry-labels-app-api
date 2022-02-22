@@ -1,4 +1,3 @@
 #!/bin/bash
 
-/usr/local/bin/docker-compose -f $PWD/docker-compose.yml run certbot renew \
-&& /usr/local/bin/docker-compose -f $PWD/docker-compose.yml kill -s SIGHUP nginx
+docker-compose run certbot-service renew && docker-compose kill -s SIGHUP nginx-service
