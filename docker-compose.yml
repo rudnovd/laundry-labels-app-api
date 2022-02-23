@@ -98,7 +98,7 @@ services:
     environment:
       EMAIL: ${EMAIL}
       DOMAINS_LIST: ${DOMAINS_LIST}
-    command: certonly --webroot --webroot-path=/var/www/html --email $EMAIL --agree-tos --no-eff-email --force-renewal -d $DOMAINS_LIST
+    command: certonly --webroot --webroot-path=/var/www/_letsencrypt --email $EMAIL --agree-tos --no-eff-email --force-renewal -d $DOMAINS_LIST
 
 volumes:
   mongodb-volume:
