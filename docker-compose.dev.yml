@@ -13,9 +13,6 @@ services:
       - main-network
     env_file:
       - .env
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: ${DATABASE_USER}
-      MONGO_INITDB_ROOT_PASSWORD: ${DATABASE_PASSWORD}
   redis-service-dev:
     image: redis:alpine
     container_name: laundry-labels-app-redis-dev
