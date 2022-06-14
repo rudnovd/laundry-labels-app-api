@@ -15,16 +15,11 @@
       "@types/node",
       "./src/types/server"
     ],
-    "paths": {
-      "##/*": [
-        "./src/*"
-      ],
-    },
     "rootDir": "src",
     "outDir": "dist"
   },
   "include": [
-    "./src/**/*.ts",
+    "./src/**/*.ts"
   ],
   "exclude": [
     "node_modules"
