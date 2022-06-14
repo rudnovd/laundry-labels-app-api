@@ -1,7 +1,7 @@
-import { deleteItem, editItem, getItemById, getItems, postItem } from '##/api/items'
-import { getItemImage, uploadItemImage } from '##/api/upload'
-import { login, logout, refreshToken, registration } from '##/auth'
 import { Router } from 'express'
+import { deleteItem, editItem, getItemById, getItems, postItem } from './api/items'
+import { getItemImage, uploadItemImage } from './api/upload'
+import { login, logout, refreshToken, registration } from './auth'
 
 export const authRouter = Router()
 authRouter.post('/login', login)

@@ -1,9 +1,9 @@
-import { AppError } from '##/error'
-import { ItemModel } from '##/models/item'
-import { redis } from '##/redis'
 import type { NextFunction, Request, Response } from 'express'
 import { accessSync, constants, rmSync } from 'fs'
 import { StatusCodes } from 'http-status-codes'
+import { AppError } from '../error'
+import { ItemModel } from '../models/item'
+import { redis } from '../redis'
 
 export async function getItems(req: Request, res: Response, next: NextFunction) {
   try {

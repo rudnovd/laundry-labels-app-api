@@ -1,13 +1,17 @@
-import { logger } from '##/logger'
 import { CronJob } from 'cron'
 import { constants } from 'fs'
 import fs from 'fs/promises'
 import { createClient } from 'redis'
+import { logger } from './logger'
 
 export const redis = createClient({
-  socket: { host: process.env.REDIS_HOST || 'localhost', port: 6379 },
-  password: process.env.REDIS_PASSWORD,
+  url: process.env.REDIS_URI,
+  socket: {
+    tls: !!process.env.REDIS_SOCKET_TLS,
+    rejectUnauthorized: false,
+  },
 })
+
 redis.on('error', async (err) => {
   logger.log('Server: Redis Client - ', err)
   await redis.quit()

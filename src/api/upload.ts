@@ -1,11 +1,11 @@
-import { AppError } from '##/error'
-import { redis } from '##/redis'
 import { randomUUID } from 'crypto'
 import type { NextFunction, Request, Response } from 'express'
 import { constants } from 'fs'
 import fs from 'fs/promises'
 import { StatusCodes } from 'http-status-codes'
 import ms from 'ms'
+import { AppError } from '../error'
+import { redis } from '../redis'
 
 export async function getItemImage(req: Request, res: Response, next: NextFunction) {
   try {

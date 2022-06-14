@@ -1,14 +1,9 @@
-import { jwtSecret } from '##/config'
-import type { AppError } from '##/error'
-import { logger } from '##/logger'
-import '##/redis'
-import { apiRouter, authRouter, uploadRouter } from '##/router'
 import { json, urlencoded } from 'body-parser'
 import cookieParser from 'cookie-parser'
 import type { NextFunction, Request, Response } from 'express'
 import express from 'express'
 import fileUpload from 'express-fileupload'
-import jwt from 'express-jwt'
+import { expressjwt } from 'express-jwt'
 import rateLimit from 'express-rate-limit'
 import helmet from 'helmet'
 import { StatusCodes } from 'http-status-codes'
@@ -16,6 +11,11 @@ import mongoose from 'mongoose'
 import morgan from 'morgan'
 import ms from 'ms'
 import path from 'path'
+import { jwtSecret } from './config'
+import type { AppError } from './error'
+import { logger } from './logger'
+import './redis'
+import { apiRouter, authRouter, uploadRouter } from './router'
 
 global.__basedir = path.dirname(__filename)
 
@@ -24,20 +24,9 @@ if (process.env.DATABASE_URI) {
     .connect(process.env.DATABASE_URI as string)
     .then(() => logger.info(`Server: connected to database`))
     .catch((error) => logger.error(`Server: ${error}`))
-} else if (process.env.DATABASE_URL) {
-  mongoose
-    .connect(process.env.DATABASE_URL as string, {
-      authSource: 'admin',
-      dbName: process.env.DATABASE_NAME,
-      auth: {
-        username: process.env.DATABASE_USER,
-        password: process.env.DATABASE_PASSWORD,
-      },
-    })
-    .then(() => logger.info(`Server: connected to database`))
-    .catch((error) => logger.error(`Server: ${error}`))
 } else {
   logger.error('Server: DATABASE_URL in .env not found')
+  throw new Error('DATABASE_URL in .env not found')
 }
 
 const app = express()
@@ -69,7 +58,7 @@ app
 
 app
   .use(
-    jwt({ secret: jwtSecret, algorithms: ['HS512'] }).unless({
+    expressjwt({ secret: jwtSecret, algorithms: ['HS512'] }).unless({
       path: ['/', /^\/auth\/.*/, { url: /^\/upload\/items\/.*/, methods: ['GET'] }],
     })
   )
