@@ -9,3 +9,5 @@ src/logs
 docker/nginx/*.conf
 *.log
 *.postman_collection.json
+.env.*
+!.env.example
