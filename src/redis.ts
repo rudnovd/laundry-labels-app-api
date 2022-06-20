@@ -35,7 +35,10 @@ redis.clientId().then((clientId) => {
             redis.del(keys[index])
             fs.access(filePath, constants.F_OK)
               .then(() => fs.rm(filePath))
-              .catch((error) => logger.error(error))
+              .catch(() => `Failed to delete ${filePath}, file not found`)
+            fs.access(`${filePath}.webp`, constants.F_OK)
+              .then(() => fs.rm(`${filePath}.webp`))
+              .catch(() => `Failed to delete ${filePath}.webp, file not found`)
             count++
           }
         })
