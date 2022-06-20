@@ -1,13 +1,15 @@
 import type { NextFunction, Request, Response } from 'express'
-import { accessSync, constants, rmSync } from 'fs'
+import { constants } from 'fs'
+import fs from 'fs/promises'
 import { StatusCodes } from 'http-status-codes'
+import { deleteImage, uploadImage } from '../cloudinary'
 import { AppError } from '../error'
 import { ItemModel } from '../models/item'
 import { redis } from '../redis'
 
 export async function getItems(req: Request, res: Response, next: NextFunction) {
   try {
-    const items = await ItemModel.find({ owner: req.user?.data._id }, '-owner').lean()
+    const items = await ItemModel.find({ owner: req.auth?.data._id }, '-owner').lean()
     res.send(items)
   } catch (error) {
     next(new AppError('ERR_GET_ITEMS', StatusCodes.INTERNAL_SERVER_ERROR, 'Server cannot receive items', error))
@@ -16,7 +18,7 @@ export async function getItems(req: Request, res: Response, next: NextFunction) 
 
 export async function getItemById(req: Request, res: Response, next: NextFunction) {
   try {
-    const item = await ItemModel.findOne({ _id: req.params._id, owner: req.user?.data._id }, '-owner').lean()
+    const item = await ItemModel.findOne({ _id: req.params._id, owner: req.auth?.data._id }, '-owner').lean()
     if (!item) {
       return next(
         new AppError('ERR_GET_ITEM_BY_ID_NOT_FOUND', StatusCodes.NOT_FOUND, `Item with id ${req.params._id} not found`)
@@ -32,17 +34,42 @@ export async function getItemById(req: Request, res: Response, next: NextFunctio
 export async function postItem(req: Request, res: Response, next: NextFunction) {
   const { icons, images, tags } = req.body
 
+  let uploadedImages = []
+
+  // upload images to Cloudinary
+  try {
+    uploadedImages = await uploadImage(images)
+  } catch (error) {
+    return next(
+      new AppError(
+        'ERR_POST_ITEM_UPLOAD_IMAGES',
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        'Server cannot create item with current images',
+        error
+      )
+    )
+  }
+
   try {
     const newItem = new ItemModel({
       icons,
-      images,
+      images: uploadedImages.map((image) => image.url),
       tags,
-      owner: req.user?.data._id,
+      owner: req.auth?.data._id,
     })
 
     try {
       const item = await newItem.save()
-      images.map((image: Array<string>) => redis.del(image))
+      // delete images from disk
+      images.map((image: string) => {
+        redis.del(image)
+        fs.access(`${global.__basedir}${image}`, constants.F_OK)
+          .then(() => fs.rm(`${global.__basedir}${image}`))
+          .catch(() => `Failed to delete ${global.__basedir}${image}, file not found`)
+        fs.access(`${global.__basedir}${image}.webp`, constants.F_OK)
+          .then(() => fs.rm(`${global.__basedir}${image}.webp`))
+          .catch(() => `Failed to delete ${global.__basedir}${image}.webp, file not found`)
+      })
 
       return res.send(item)
     } catch (error: any) {
@@ -58,7 +85,7 @@ export async function editItem(req: Request, res: Response, next: NextFunction) 
   const { icons, tags } = req.body
 
   try {
-    const updatedItem = await ItemModel.findOneAndUpdate({ _id, owner: req.user?.data._id }, { icons, tags })
+    const updatedItem = await ItemModel.findOneAndUpdate({ _id, owner: req.auth?.data._id }, { icons, tags })
 
     return res.send(updatedItem)
   } catch (error) {
@@ -70,15 +97,19 @@ export async function deleteItem(req: Request, res: Response, next: NextFunction
   const { _id } = req.params
 
   try {
-    const deletedItem = await ItemModel.findOneAndRemove({ _id, owner: req.user?.data._id })
+    const deletedItem = await ItemModel.findOneAndRemove({ _id, owner: req.auth?.data._id })
     if (deletedItem) {
-      for (const image of deletedItem.images) {
-        try {
-          accessSync(`${global.__basedir}${image}`, constants.F_OK)
-          rmSync(`${global.__basedir}${image}`)
-        } catch (error) {
-          console.error(error)
-        }
+      try {
+        const ids = deletedItem.images.map((image) => {
+          const imageName = image.split('/').pop()
+          if (!imageName) return ''
+          const imageId = imageName.split('.')[0]
+          return imageId
+        })
+
+        deleteImage(ids)
+      } catch (error) {
+        console.error(error)
       }
     }
 
