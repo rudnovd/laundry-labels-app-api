@@ -13,7 +13,7 @@ declare global {
     }
 
     interface Request {
-      user?: User | undefined
+      auth: User | undefined
     }
   }
 }
