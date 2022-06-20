@@ -31,7 +31,7 @@ if (process.env.DATABASE_URI) {
 
 const app = express()
 
-morgan.token('user', (req: Request) => (req.user?.data._id ? `user - ${req.user.data._id}` : ''))
+morgan.token('user', (req: Request) => (req.auth?.data._id ? `user - ${req.auth.data._id}` : ''))
 app
   .use(
     morgan(':method :url :status - :response-time ms :user', {
