@@ -14,7 +14,7 @@ export const logger = winston.createLogger({
     new DailyRotateFile({
       datePattern: 'DD-MM-YYYY',
       filename: '%DATE%.log',
-      dirname: process.env.NODE_ENV === 'development' ? './logs' : '/var/log/laundry-labels-app/api',
+      dirname: './logs',
       maxSize: '50mb',
       maxFiles: '100d',
       format: winston.format.combine(
