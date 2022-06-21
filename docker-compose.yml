@@ -66,7 +66,7 @@ services:
   app-service:
     container_name: laundry-labels-app-api
     ports:
-      - ${APP_PORT}:${APP_PORT}
+      - ${PORT}:${PORT}
     restart: always
     volumes:
       - app-volume:/app
