@@ -9,7 +9,7 @@
   "author": "rudnovd",
   "license": "AGPL-3.0-or-later",
   "engines": {
-    "node": ">=16"
+    "node": ">=16.12.0 <18"
   },
   "scripts": {
     "start": "NODE_ENV=development ts-node src/index.ts",
