@@ -34,6 +34,11 @@ export async function getItemById(req: Request, res: Response, next: NextFunctio
 export async function postItem(req: Request, res: Response, next: NextFunction) {
   const { icons, images, tags } = req.body
 
+  const items = await ItemModel.find({ owner: req.auth?.data._id }, '-owner').lean().count()
+  if (items >= 20) {
+    return next(new AppError('ERR_POST_ITEM_MAX_ITEMS', StatusCodes.BAD_REQUEST, 'Items limit reached'))
+  }
+
   let uploadedImages = []
 
   // upload images to Cloudinary
@@ -43,7 +48,7 @@ export async function postItem(req: Request, res: Response, next: NextFunction) 
     return next(
       new AppError(
         'ERR_POST_ITEM_UPLOAD_IMAGES',
-        StatusCodes.INTERNAL_SERVER_ERROR,
+        StatusCodes.BAD_REQUEST,
         'Server cannot create item with current images',
         error
       )
@@ -73,7 +78,7 @@ export async function postItem(req: Request, res: Response, next: NextFunction) 
 
       return res.send(item)
     } catch (error: any) {
-      return next(new AppError('ERR_POST_ITEM_VALIDATION', StatusCodes.INTERNAL_SERVER_ERROR, error.message))
+      return next(new AppError('ERR_POST_ITEM_VALIDATION', StatusCodes.BAD_REQUEST, error.message))
     }
   } catch (error) {
     next(new AppError('ERR_POST_ITEM', StatusCodes.INTERNAL_SERVER_ERROR, 'Server cannot create new item', error))
