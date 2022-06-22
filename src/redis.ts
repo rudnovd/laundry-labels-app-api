@@ -12,11 +12,11 @@ export const redis = createClient({
   },
 })
 
-redis.on('error', async (err) => {
-  logger.log('Server: Redis Client - ', err)
-  await redis.quit()
-})
 redis.connect().then(() => logger.info('Server: connected to Redis'))
+
+redis.on('error', async (err) => {
+  logger.error('Server: Redis Client error:', err)
+})
 
 redis.clientId().then((clientId) => {
   if (!clientId) return
