@@ -11,6 +11,11 @@ export const logger = winston.createLogger({
         winston.format.printf((info) => `${info.timestamp} ${info.level}: ${info.message}`)
       ),
     }),
+  ],
+})
+
+if (process.env.SAVE_LOGS) {
+  logger.add(
     new DailyRotateFile({
       datePattern: 'DD-MM-YYYY',
       filename: '%DATE%.log',
@@ -21,6 +26,6 @@ export const logger = winston.createLogger({
         winston.format.timestamp(),
         winston.format.printf((info) => `${info.timestamp} ${info.level}: ${info.message}`)
       ),
-    }),
-  ],
-})
+    })
+  )
+}
