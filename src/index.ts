@@ -1,4 +1,4 @@
-import { json, urlencoded } from 'body-parser'
+import bodyParser from 'body-parser'
 import cookieParser from 'cookie-parser'
 import type { NextFunction, Request, Response } from 'express'
 import express from 'express'
@@ -11,11 +11,14 @@ import mongoose from 'mongoose'
 import morgan from 'morgan'
 import ms from 'ms'
 import path from 'path'
-import { jwtSecret } from './config'
-import type { AppError } from './error'
-import { logger } from './logger'
-import './redis'
-import { apiRouter, authRouter, uploadRouter } from './router'
+import { fileURLToPath } from 'url'
+import { jwtSecret } from './config.js'
+import type { AppError } from './error.js'
+import { logger } from './logger.js'
+import './redis.js'
+import { apiRouter, authRouter, uploadRouter } from './router.js'
+
+const __filename = fileURLToPath(import.meta.url)
 
 global.__basedir = path.dirname(__filename)
 
@@ -29,7 +32,7 @@ if (process.env.DATABASE_URI) {
   throw new Error('DATABASE_URL in .env not found')
 }
 
-const app = express()
+export const app = express()
 
 morgan.token('user', (req: Request) => (req.auth?.data._id ? `user - ${req.auth.data._id}` : ''))
 app
@@ -38,8 +41,8 @@ app
       stream: { write: (message) => logger.http(message.substring(0, message.lastIndexOf('\n'))) },
     })
   )
-  .use(urlencoded({ extended: true }))
-  .use(json())
+  .use(bodyParser.urlencoded({ extended: true }))
+  .use(bodyParser.json())
   .use(cookieParser())
   .use(
     fileUpload({

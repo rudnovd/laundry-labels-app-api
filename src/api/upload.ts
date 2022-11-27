@@ -4,8 +4,8 @@ import { constants } from 'fs'
 import fs from 'fs/promises'
 import { StatusCodes } from 'http-status-codes'
 import ms from 'ms'
-import { AppError } from '../error'
-import { redis } from '../redis'
+import { AppError } from '../error.js'
+import { redis } from '../redis.js'
 
 export async function getItemImage(req: Request, res: Response, next: NextFunction) {
   try {

@@ -2,10 +2,10 @@ import type { NextFunction, Request, Response } from 'express'
 import { constants } from 'fs'
 import fs from 'fs/promises'
 import { StatusCodes } from 'http-status-codes'
-import { deleteImage, uploadImage } from '../cloudinary'
-import { AppError } from '../error'
-import { ItemModel } from '../models/item'
-import { redis } from '../redis'
+import { deleteImage, uploadImage } from '../cloudinary.js'
+import { AppError } from '../error.js'
+import { ItemModel } from '../models/item.js'
+import { redis } from '../redis.js'
 
 export async function getItems(req: Request, res: Response, next: NextFunction) {
   try {

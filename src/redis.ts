@@ -2,7 +2,7 @@ import { CronJob } from 'cron'
 import { constants } from 'fs'
 import fs from 'fs/promises'
 import { createClient } from 'redis'
-import { logger } from './logger'
+import { logger } from './logger.js'
 
 export const redis = createClient({
   url: process.env.REDIS_URI,

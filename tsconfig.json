@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
     "target": "ESNext",
-    "lib": ["DOM", "ES2020"],
-    "module": "CommonJS",
-    "moduleResolution": "node",
+    "lib": ["ESNext"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "allowJs": false,
@@ -11,17 +11,10 @@
     "noUnusedLocals": true,
     "experimentalDecorators": true,
     "importsNotUsedAsValues": "error",
-    "types": [
-      "@types/node",
-      "./src/types/server"
-    ],
+    "types": ["@types/node", "./src/types/server"],
     "rootDir": "src",
     "outDir": "dist"
   },
-  "include": [
-    "./src/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+  "include": ["./src/**/*.ts"],
+  "exclude": ["node_modules"]
 }

@@ -3,13 +3,13 @@ import { randomUUID } from 'crypto'
 import type { NextFunction, Request, Response } from 'express'
 import { verify } from 'hcaptcha'
 import { StatusCodes } from 'http-status-codes'
-import { sign } from 'jsonwebtoken'
+import jwt from 'jsonwebtoken'
 import ms from 'ms'
 import validator from 'validator'
-import { jwtSecret } from './config'
-import { AppError } from './error'
-import { RefreshToken, RefreshTokenModel } from './models/refreshTokens'
-import { UserModel } from './models/user'
+import { jwtSecret } from './config.js'
+import { AppError } from './error.js'
+import { RefreshToken, RefreshTokenModel } from './models/refreshTokens.js'
+import { UserModel } from './models/user.js'
 
 async function createRefreshToken(userId: string): Promise<RefreshToken> {
   try {
@@ -26,7 +26,7 @@ async function createRefreshToken(userId: string): Promise<RefreshToken> {
 }
 
 function createAccessToken(payload: { issuer: string; userId: string }) {
-  return sign({ data: { _id: payload.userId } }, jwtSecret, {
+  return jwt.sign({ data: { _id: payload.userId } }, jwtSecret, {
     algorithm: 'HS512',
     expiresIn: '30m',
     issuer: payload.issuer,
@@ -50,7 +50,7 @@ export async function registration(req: Request, res: Response, next: NextFuncti
   if (!email || !password) {
     return next(new AppError('ERR_AUTH_REGISTARTION_VALIDATION', StatusCodes.BAD_REQUEST, `No email or password`))
   }
-  if (!validator.isEmail(email)) {
+  if (!validator.default.isEmail(email)) {
     return next(new AppError('ERR_AUTH_REGISTARTION_VALIDATION', StatusCodes.BAD_REQUEST, `Wrong email format`))
   } else if (password.length < 5) {
     return next(
@@ -100,7 +100,7 @@ export async function registration(req: Request, res: Response, next: NextFuncti
 export async function login(req: Request, res: Response, next: NextFunction) {
   const { email, password, token } = req.body
 
-  if (!email || !validator.isEmail(email)) {
+  if (!email || !validator.default.isEmail(email)) {
     return next(new AppError('ERR_AUTH_REGISTARTION_VALIDATION', StatusCodes.BAD_REQUEST, `Wrong email format`))
   } else if (!password) {
     return next(new AppError('ERR_AUTH_REGISTARTION_VALIDATION', StatusCodes.BAD_REQUEST, `Password is required`))
