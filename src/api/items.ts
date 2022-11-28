@@ -32,7 +32,7 @@ export async function getItemById(req: Request, res: Response, next: NextFunctio
 }
 
 export async function postItem(req: Request, res: Response, next: NextFunction) {
-  const { icons, images, tags } = req.body
+  const { name, icons, images, tags } = req.body
 
   const items = await ItemModel.find({ owner: req.auth?.data._id }, '-owner').lean().count()
   if (items >= 20) {
@@ -57,6 +57,7 @@ export async function postItem(req: Request, res: Response, next: NextFunction) 
 
   try {
     const newItem = new ItemModel({
+      name,
       icons,
       images: uploadedImages.map((image) => image.url),
       tags,
@@ -87,10 +88,10 @@ export async function postItem(req: Request, res: Response, next: NextFunction) 
 
 export async function editItem(req: Request, res: Response, next: NextFunction) {
   const { _id } = req.params
-  const { icons, tags } = req.body
+  const { name, icons, tags } = req.body
 
   try {
-    const updatedItem = await ItemModel.findOneAndUpdate({ _id, owner: req.auth?.data._id }, { icons, tags })
+    const updatedItem = await ItemModel.findOneAndUpdate({ _id, name, owner: req.auth?.data._id }, { icons, tags })
 
     return res.send(updatedItem)
   } catch (error) {
