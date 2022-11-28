@@ -10,6 +10,7 @@ authRouter.post('/refreshtoken', refreshToken)
 authRouter.post('/logout', logout)
 
 export const apiRouter = Router()
+apiRouter.get('/', (_, res) => res.send())
 apiRouter.get('/items', getItems)
 apiRouter.post('/items', postItem)
 
