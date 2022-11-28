@@ -13,11 +13,11 @@
     "node": ">=16.12.0"
   },
   "scripts": {
-    "start": "NODE_ENV=development ts-node src/index.ts",
+    "start": "NODE_ENV=development ts-node --esm src/index.ts",
     "dev": "nodemon",
-    "build": "tsc -b && tsc",
+    "build": "tsc --build --clean && tsc",
     "lint": "eslint . --ext .ts",
-    "production": "pm2-runtime ./dist/ecosystem.config.js"
+    "production": "NODE_ENV=production pm2-runtime ./dist/index.js"
   },
   "dependencies": {
     "bcrypt": "^5.1.0",
