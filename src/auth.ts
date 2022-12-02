@@ -2,12 +2,11 @@ import bcrypt from 'bcrypt'
 import { randomUUID } from 'crypto'
 import type { NextFunction, Request, Response } from 'express'
 import { verify } from 'hcaptcha'
-import { StatusCodes } from 'http-status-codes'
 import jwt from 'jsonwebtoken'
 import ms from 'ms'
 import validator from 'validator'
 import { jwtSecret } from './config.js'
-import { AppError } from './error.js'
+import { AppError, Errors } from './error.js'
 import { RefreshToken, RefreshTokenModel } from './models/refreshTokens.js'
 import { UserModel } from './models/user.js'
 
@@ -48,166 +47,75 @@ export async function registration(req: Request, res: Response, next: NextFuncti
   const { email, password, token } = req.body
 
   if (!email || !password) {
-    return next(new AppError('ERR_AUTH_REGISTARTION_VALIDATION', StatusCodes.BAD_REQUEST, `No email or password`))
+    return next(new AppError(Errors.AUTH.REGISTRATION.EMAIL_AND_PASSWORD_ARE_REQUIRED))
   }
   if (!validator.default.isEmail(email)) {
-    return next(new AppError('ERR_AUTH_REGISTARTION_VALIDATION', StatusCodes.BAD_REQUEST, `Wrong email format`))
+    return next(new AppError(Errors.AUTH.REGISTRATION.WRONG_EMAIL_FORMAT))
   } else if (password.length < 5) {
-    return next(
-      new AppError('ERR_AUTH_REGISTARTION_VALIDATION', StatusCodes.BAD_REQUEST, `Password must be more than 5 symbols`)
-    )
+    return next(new AppError(Errors.AUTH.REGISTRATION.WRONG_PASSWORD_LENGTH))
   }
 
-  try {
-    if (process.env.NODE_ENV !== 'development') {
-      if (!token) {
-        return next(
-          new AppError('ERR_AUTH_LOGIN_CAPTCHA_TOKEN_NOT_FOUND', StatusCodes.BAD_REQUEST, 'Captcha token not found')
-        )
-      }
-      if (!(await verifyCaptcha(token))) {
-        return next(
-          new AppError('ERR_AUTH_LOGIN_CAPTCHA_WRONG_VERIFY', StatusCodes.BAD_REQUEST, 'Wrong captcha result')
-        )
-      }
+  if (process.env.NODE_ENV !== 'development') {
+    if (!token) {
+      return next(new AppError(Errors.AUTH.REGISTRATION.CAPTCHA_TOKEN_NOT_FOUND))
     }
-
-    const currentUser = await UserModel.findOne({ email }).lean()
-    if (currentUser) {
-      return next(
-        new AppError('ERR_AUTH_REGISTARTION_EMAIL_ALREADY_EXIST', StatusCodes.NOT_ACCEPTABLE, 'Email already exist')
-      )
+    if (!(await verifyCaptcha(token))) {
+      return next(new AppError(Errors.AUTH.REGISTRATION.CAPTCHA_WRONG_VERIFY))
     }
-
-    const newUser = new UserModel({
-      email,
-      password: await bcrypt.hash(password, 10),
-    })
-    const user = await newUser.save()
-
-    const newRefreshToken = await createRefreshToken(user._id)
-    res.cookie('refreshToken', newRefreshToken.token, { httpOnly: true, expires: new Date(newRefreshToken.expiresIn) })
-    res.send({
-      user,
-      accessToken: createAccessToken({ issuer: req.hostname, userId: user._id.toString() }),
-      refreshToken,
-    })
-  } catch (error) {
-    next(new AppError('ERR_AUTH_REGISTARTION', StatusCodes.INTERNAL_SERVER_ERROR, 'Error on registation', error))
   }
+
+  const currentUser = await UserModel.findOne({ email }).lean()
+  if (currentUser) {
+    return next(new AppError(Errors.AUTH.REGISTRATION.EMAIL_ALREADY_EXIST))
+  }
+
+  const newUser = new UserModel({
+    email,
+    password: await bcrypt.hash(password, 10),
+  })
+  const user = await newUser.save()
+
+  const newRefreshToken = await createRefreshToken(user._id)
+  res.cookie('refreshToken', newRefreshToken.token, { httpOnly: true, expires: new Date(newRefreshToken.expiresIn) })
+  res.send({
+    user,
+    accessToken: createAccessToken({ issuer: req.hostname, userId: user._id.toString() }),
+    refreshToken,
+  })
 }
 
 export async function login(req: Request, res: Response, next: NextFunction) {
   const { email, password, token } = req.body
 
-  if (!email || !validator.default.isEmail(email)) {
-    return next(new AppError('ERR_AUTH_REGISTARTION_VALIDATION', StatusCodes.BAD_REQUEST, `Wrong email format`))
+  if (!email) {
+    return next(new AppError(Errors.AUTH.LOGIN.NO_EMAIL))
+  } else if (!validator.default.isEmail(email)) {
+    return next(new AppError(Errors.AUTH.LOGIN.WRONG_EMAIL_FORMAT))
   } else if (!password) {
-    return next(new AppError('ERR_AUTH_REGISTARTION_VALIDATION', StatusCodes.BAD_REQUEST, `Password is required`))
+    return next(new AppError(Errors.AUTH.LOGIN.PASSWORD_IS_REQUIRED))
   }
 
-  try {
-    const user = await UserModel.findOne({ email }, '+password').lean()
-    if (!user) return next(new AppError('ERR_AUTH_LOGIN_USER_NOT_FOUND', StatusCodes.NOT_FOUND, 'User not found'))
-
-    if (process.env.NODE_ENV !== 'development') {
-      if (!token) {
-        return next(
-          new AppError(
-            'ERR_AUTH_LOGIN_CAPTCHA_TOKEN_NOT_FOUND',
-            StatusCodes.INTERNAL_SERVER_ERROR,
-            'Captcha token not found'
-          )
-        )
-      }
-      if (!(await verifyCaptcha(token))) {
-        return next(
-          new AppError('ERR_AUTH_LOGIN_CAPTCHA_WRONG_VERIFY', StatusCodes.INTERNAL_SERVER_ERROR, 'Wrong captcha result')
-        )
-      }
-    }
-
-    if (await bcrypt.compare(password, user.password)) {
-      const newRefreshToken = await createRefreshToken(user._id)
-      res.cookie('refreshToken', newRefreshToken.token, {
-        httpOnly: true,
-        expires: new Date(newRefreshToken.expiresIn),
-      })
-
-      res.send({
-        user: {
-          _id: user._id,
-          isDisabled: user.isDisabled,
-        },
-        accessToken: createAccessToken({ issuer: req.hostname, userId: user._id.toString() }),
-        refreshToken,
-      })
-    } else {
-      return next(
-        new AppError(
-          'ERR_AUTH_LOGIN_WRONG_EMAIL_OR_PASSWORD',
-          StatusCodes.INTERNAL_SERVER_ERROR,
-          'Wrong email or password'
-        )
-      )
-    }
-  } catch (error) {
-    next(new AppError('ERR_AUTH_LOGIN', StatusCodes.INTERNAL_SERVER_ERROR, 'Error on login', error))
+  const user = await UserModel.findOne({ email }, '+password').lean()
+  if (!user) {
+    return next(new AppError(Errors.AUTH.LOGIN.USER_NOT_FOUND))
   }
-}
 
-export async function refreshToken(req: Request, res: Response, next: NextFunction) {
-  if (!req.cookies)
-    return next(
-      new AppError(
-        'ERR_AUTH_REFRESHTOKEN_COOKIE_REQUIRED',
-        StatusCodes.INTERNAL_SERVER_ERROR,
-        '"refreshToken" cookie required'
-      )
-    )
-  const { refreshToken } = req.cookies
-
-  if (!refreshToken)
-    return next(
-      new AppError(
-        'ERR_AUTH_REFRESHTOKEN_REFRESHTOKEN_NOT_FOUND',
-        StatusCodes.INTERNAL_SERVER_ERROR,
-        'Refresh token not found'
-      )
-    )
-
-  try {
-    const token = await RefreshTokenModel.findOne({ token: refreshToken })
+  if (process.env.NODE_ENV !== 'development') {
     if (!token) {
-      return next(
-        new AppError(
-          'ERR_AUTH_REFRESHTOKEN_REFRESHTOKEN_NOT_FOUND',
-          StatusCodes.INTERNAL_SERVER_ERROR,
-          'Refresh token not found'
-        )
-      )
+      return next(new AppError(Errors.AUTH.LOGIN.CAPTCHA_TOKEN_NOT_FOUND))
     }
-
-    if (token.expiresIn < new Date().getTime()) {
-      token.delete()
-      return next(
-        new AppError('ERR_AUTH_REFRESHTOKEN_TOKEN_EXPIRED', StatusCodes.INTERNAL_SERVER_ERROR, 'Token expired')
-      )
+    if (!(await verifyCaptcha(token))) {
+      return next(new AppError(Errors.AUTH.LOGIN.CAPTCHA_WRONG_VERIFY))
     }
+  }
 
-    const user = await UserModel.findOne({ _id: token.userId }).lean()
-    if (!user) {
-      return next(
-        new AppError('ERR_AUTH_REFRESHTOKEN_USER_NOT_FOUND', StatusCodes.INTERNAL_SERVER_ERROR, 'User not found')
-      )
-    }
-
+  const isPasswordRight = await bcrypt.compare(password, user.password)
+  if (isPasswordRight && !user.isDisabled) {
     const newRefreshToken = await createRefreshToken(user._id)
     res.cookie('refreshToken', newRefreshToken.token, {
       httpOnly: true,
       expires: new Date(newRefreshToken.expiresIn),
     })
-    token.delete()
 
     return res.send({
       user: {
@@ -215,34 +123,70 @@ export async function refreshToken(req: Request, res: Response, next: NextFuncti
         isDisabled: user.isDisabled,
       },
       accessToken: createAccessToken({ issuer: req.hostname, userId: user._id.toString() }),
-      refreshToken: newRefreshToken.token,
+      refreshToken,
     })
-  } catch (error) {
-    next(new AppError('ERR_AUTH_REFRESHTOKEN', StatusCodes.INTERNAL_SERVER_ERROR, 'Error on refreshtoken', error))
+  } else if (isPasswordRight && user.isDisabled) {
+    return next(new AppError(Errors.AUTH.LOGIN.USER_IS_DISABLED))
+  } else if (!isPasswordRight) {
+    return next(new AppError(Errors.AUTH.LOGIN.WRONG_EMAIL_OR_PASSWORD))
   }
+}
+
+export async function refreshToken(req: Request, res: Response, next: NextFunction) {
+  if (!req.cookies) {
+    return next(Errors.COMMON.COOKIES_NOT_FOUND)
+  }
+  const { refreshToken } = req.cookies
+  if (!refreshToken) {
+    return next(new AppError(Errors.AUTH.REFRESHTOKEN.REFRESHTOKEN_COOKIE_NOT_FOUND))
+  }
+
+  const token = await RefreshTokenModel.findOne({ token: refreshToken })
+  if (!token) {
+    return next(new AppError(Errors.AUTH.REFRESHTOKEN.REFRESHTOKEN_NOT_FOUND))
+  }
+
+  if (token.expiresIn < new Date().getTime()) {
+    token.delete()
+    return next(new AppError(Errors.AUTH.REFRESHTOKEN.TOKEN_EXPIRED))
+  }
+
+  const user = await UserModel.findOne({ _id: token.userId }).lean()
+  if (!user) {
+    return next(new AppError(Errors.AUTH.REFRESHTOKEN.USER_NOT_FOUND))
+  } else if (user.isDisabled) {
+    return next(Errors.AUTH.REFRESHTOKEN.USER_DISABLED)
+  }
+
+  const newRefreshToken = await createRefreshToken(user._id)
+  res.cookie('refreshToken', newRefreshToken.token, {
+    httpOnly: true,
+    expires: new Date(newRefreshToken.expiresIn),
+  })
+  token.delete()
+
+  return res.send({
+    user: {
+      _id: user._id,
+      isDisabled: user.isDisabled,
+    },
+    accessToken: createAccessToken({ issuer: req.hostname, userId: user._id.toString() }),
+    refreshToken: newRefreshToken.token,
+  })
 }
 
 export async function logout(req: Request, res: Response, next: NextFunction) {
   if (!req.cookies) {
-    return next(new AppError('ERR_AUTH_LOGOUT', StatusCodes.INTERNAL_SERVER_ERROR, '"refreshToken" cookie required'))
+    return next(new AppError(Errors.COMMON.COOKIES_NOT_FOUND))
   }
   const { refreshToken } = req.cookies
-
-  try {
-    const token = await RefreshTokenModel.findOne({ token: refreshToken })
-    if (!token) {
-      return next(
-        new AppError(
-          'ERR_AUTH_LOGOUT_REFRESHTOKEN_NOT_FOUND',
-          StatusCodes.INTERNAL_SERVER_ERROR,
-          'Refresh token not found'
-        )
-      )
-    }
-    await token.delete()
-
-    return res.send(true)
-  } catch (error) {
-    next(new AppError('ERR_AUTH_LOGOUT', StatusCodes.INTERNAL_SERVER_ERROR, 'Error on logout', error))
+  if (!refreshToken) {
+    return next(Errors.AUTH.LOGOUT.REFRESHTOKEN_COOKIE_NOT_FOUND)
   }
+
+  const token = await RefreshTokenModel.findOneAndDelete({ token: refreshToken }).lean()
+  if (!token) {
+    return next(Errors.AUTH.LOGOUT.REFRESHTOKEN_COOKIE_NOT_FOUND)
+  }
+  return res.send(true)
 }

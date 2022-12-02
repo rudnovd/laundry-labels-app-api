@@ -67,23 +67,22 @@ app
   )
   .use('/auth', authRouter)
   .use('/upload', uploadRouter)
-  .use(apiRouter)
+  .use('/api', apiRouter)
+  .use('/', (_, res) => res.send())
+  .use((error: AppError, _request: Request, res: Response, _: NextFunction) => {
+    let logMessage = `Code: ${error.name}; message: ${error.message};`
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-app.use((error: AppError, _request: Request, res: Response, _: NextFunction) => {
-  let logMessage = `Code: ${error.name}; message: ${error.message};`
+    const originalError = (error.originalError as Error) || ''
+    if (originalError) logMessage += ` original stack: ${originalError.stack}`
 
-  const originalError = (error.originalError as Error) || ''
-  if (originalError) logMessage += ` original stack: ${originalError.stack}`
-
-  logger.error(logMessage)
-  res.status(error.status || StatusCodes.INTERNAL_SERVER_ERROR).json({
-    error: {
-      name: error.name,
-      message: error.message,
-    },
+    logger.error(logMessage)
+    res.status(error.status || StatusCodes.INTERNAL_SERVER_ERROR).json({
+      error: {
+        name: error.name,
+        message: error.message,
+      },
+    })
   })
-})
 
 app.listen(process.env.PORT || 5000, () => {
   logger.info(`NODE_ENV: ${process.env.NODE_ENV}`)
