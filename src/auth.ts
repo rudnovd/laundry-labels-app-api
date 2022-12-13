@@ -5,18 +5,18 @@ import { verify } from 'hcaptcha'
 import jwt from 'jsonwebtoken'
 import ms from 'ms'
 import validator from 'validator'
-import { jwtSecret } from './config.js'
+import { config } from './config.js'
 import { AppError, Errors } from './error.js'
 import { RefreshToken, RefreshTokenModel } from './models/refreshTokens.js'
 import { UserModel } from './models/user.js'
 
 async function createRefreshToken(userId: string): Promise<RefreshToken> {
   try {
-    const expiresDate = new Date().getTime() + ms('60 days')
+    const expiresIn = new Date().getTime() + ms('60 days')
     const refreshToken = new RefreshTokenModel({
       userId,
       token: randomUUID(),
-      expiresIn: parseInt(expiresDate.toString()),
+      expiresIn,
     })
     return await refreshToken.save()
   } catch (error) {
@@ -25,7 +25,7 @@ async function createRefreshToken(userId: string): Promise<RefreshToken> {
 }
 
 function createAccessToken(payload: { issuer: string; userId: string }) {
-  return jwt.sign({ data: { _id: payload.userId } }, jwtSecret, {
+  return jwt.sign({ data: { _id: payload.userId } }, config.jwtSecret, {
     algorithm: 'HS512',
     expiresIn: '30m',
     issuer: payload.issuer,
