@@ -12,7 +12,7 @@ import morgan from 'morgan'
 import ms from 'ms'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import { jwtSecret } from './config.js'
+import { config } from './config.js'
 import type { AppError } from './error.js'
 import { logger } from './logger.js'
 import './redis.js'
@@ -22,14 +22,14 @@ const __filename = fileURLToPath(import.meta.url)
 
 global.__basedir = path.dirname(__filename)
 
-if (process.env.DATABASE_URI) {
+if (config.databaseURI) {
+  mongoose.set({ sanitizeFilter: true, strictQuery: false })
   mongoose
-    .connect(process.env.DATABASE_URI as string)
+    .connect(config.databaseURI)
     .then(() => logger.info(`Server: connected to database`))
     .catch((error) => logger.error(`Server: ${error}`))
 } else {
-  logger.error('Server: DATABASE_URL in .env not found')
-  throw new Error('DATABASE_URL in .env not found')
+  throw new Error('DATABASE_URI not found in .env file')
 }
 
 export const app = express()
@@ -48,20 +48,20 @@ app
     fileUpload({
       createParentPath: true,
       abortOnLimit: true,
-      limits: { fileSize: 15 * 1024 * 1024 }, //5mb,
+      limits: { fileSize: 15 * 1024 * 1024 }, //15mb,
     })
   )
   .use(helmet())
   .use(
     rateLimit({
-      windowMs: ms('5m'),
-      max: 100,
+      windowMs: ms('1m'),
+      max: 50,
     })
   )
 
 app
   .use(
-    expressjwt({ secret: jwtSecret, algorithms: ['HS512'] }).unless({
+    expressjwt({ secret: config.jwtSecret, algorithms: ['HS512'] }).unless({
       path: ['/', /^\/auth\/.*/, { url: /^\/upload\/items\/.*/, methods: ['GET'] }],
     })
   )
