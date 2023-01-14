@@ -1,11 +1,11 @@
 import { randomUUID } from 'crypto'
 import type { NextFunction, Request, Response } from 'express'
+import type { UploadedFile } from 'express-fileupload'
 import { constants } from 'fs'
 import fs from 'fs/promises'
-import { StatusCodes } from 'http-status-codes'
-import ms from 'ms'
+import sharp from 'sharp'
+import { uploadToCloudinary } from '../cloudinary.js'
 import { AppError, Errors } from '../error.js'
-import { redis } from '../redis.js'
 
 export async function getItemImage(req: Request, res: Response, next: NextFunction) {
   try {
@@ -17,29 +17,33 @@ export async function getItemImage(req: Request, res: Response, next: NextFuncti
 }
 
 export async function uploadItemImage(req: Request, res: Response, next: NextFunction) {
-  if (!req.files || Object.keys(req.files).length === 0) {
+  if (!req.files || !Object.keys(req.files)) {
     return next(new AppError(Errors.UPLOAD.UPLOAD_ITEM_IMAGE.NO_FILES_UPLOADED))
   }
 
-  const file = Object.values(req.files)[0]
-
-  if (!Array.isArray(file)) {
-    if (file.mimetype !== 'image/jpeg' && file.mimetype !== 'image/jpg' && file.mimetype !== 'image/png') {
-      return next(new AppError(Errors.UPLOAD.UPLOAD_ITEM_IMAGE.WRONG_FILE_TYPE))
-    }
-
-    const fileName = randomUUID()
-    const fileType = file.mimetype.split('/')[1]
-    const filePath = `${global.__basedir}/upload/items/${fileName}.${fileType}`
-    file.mv(filePath, (err) => {
-      if (err && Object.keys(err).length) {
-        return next(new AppError(Errors.UPLOAD.UPLOAD_ITEM_IMAGE.FILE_MV, err))
-      } else {
-        redis.set(filePath, (Date.now() + ms('30m')).toString())
-        return res.status(StatusCodes.OK).json({ images: [`/upload/items/${fileName}.${fileType}`] })
-      }
-    })
+  let file: UploadedFile
+  if (Array.isArray(req.files)) {
+    const firstFile = req.files[0]
+    file = req.files[Object.keys(firstFile)[0]] as UploadedFile
   } else {
-    return next(new AppError(Errors.UPLOAD.UPLOAD_ITEM_IMAGE.NO_FILES_UPLOADED))
+    file = req.files[Object.keys(req.files)[0]] as UploadedFile
+  }
+
+  const allowedMimeTypes = ['image/jpg', 'image/jpeg', 'image/png', 'image/webp', 'image/avif']
+
+  if (!allowedMimeTypes.includes(file.mimetype)) {
+    return next(new AppError(Errors.UPLOAD.UPLOAD_ITEM_IMAGE.WRONG_FILE_TYPE))
+  }
+
+  const fileBuffer = await sharp(file.data).webp({ quality: 15 }).toBuffer()
+
+  if (process.env.IS_CLOUD_SERVER) {
+    const uploadedFile = await uploadToCloudinary(fileBuffer)
+    res.json({ url: uploadedFile?.url ?? '' })
+  } else {
+    const fileName = randomUUID()
+    const filePath = `${global.__basedir}/upload/items/${fileName}.webp`
+    const uploadedFile = await fs.writeFile(filePath, JSON.stringify(fileBuffer))
+    return res.json({ url: `/upload/items/${uploadedFile}.webp` })
   }
 }
