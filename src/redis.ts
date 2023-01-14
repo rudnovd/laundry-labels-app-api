@@ -6,10 +6,6 @@ import { logger } from './logger.js'
 
 export const redis = createClient({
   url: process.env.REDIS_URI,
-  socket: {
-    tls: !!process.env.REDIS_SOCKET_TLS,
-    rejectUnauthorized: false,
-  },
 })
 
 redis.connect().then(() => logger.info('Server: connected to Redis'))
