@@ -1,29 +1,26 @@
-import { v2 } from 'cloudinary'
-import sharp from 'sharp'
+import { UploadApiResponse, v2 } from 'cloudinary'
+import { Readable } from 'stream'
+import { config } from './config.js'
 
-if (process.env.CLOUDINARY_API_SECRET) {
-  v2.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET,
-  })
-} else {
+if (process.env.IS_CLOUD_SERVER && process.env.CLOUDINARY_API_SECRET) {
+  v2.config(config.cloudinary)
+} else if (process.env.IS_CLOUD_SERVER && process.env.NODE_ENV === 'production' && !process.env.CLOUDINARY_API_SECRET) {
   throw new Error('CLOUDINARY_API_SECRET in .env not found')
 }
 
-export const uploadImage = async (files: Array<string>) => {
-  const uploads = files.map(async (file) => {
-    try {
-      await sharp(`${global.__basedir}${file}`).webp({ quality: 20 }).toFile(`${global.__basedir}${file}.webp`)
-    } catch (err) {
-      throw new Error(err as string)
-    }
-    return v2.uploader.upload(`${global.__basedir}${file}.webp`)
+export async function uploadToCloudinary(file: Buffer): Promise<UploadApiResponse | undefined> {
+  return new Promise((resolve, reject) => {
+    const stream = v2.uploader.upload_stream({}, (err, result) => {
+      if (err) {
+        return reject(err)
+      }
+      resolve(result)
+    })
+    const readable = Readable.from(file)
+    readable.pipe(stream)
   })
-  return Promise.all(uploads)
 }
 
-export const deleteImage = async (ids: Array<string>) => {
-  const deletes = ids.map((id) => v2.uploader.destroy(id))
-  return Promise.all(deletes)
+export const deleteFromCloudinary = async (ids: Array<string>) => {
+  return Promise.all(ids.map((id) => v2.uploader.destroy(id)))
 }
