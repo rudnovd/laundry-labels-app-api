@@ -10,7 +10,7 @@ async function asyncHandler(
   res: Response,
   next: NextFunction,
   fn: Awaited<
-    (req: Request, res: Response, next: NextFunction) => Promise<void | Response<unknown, Record<string, unknown>>>
+    (_req: Request, _res: Response, _next: NextFunction) => Promise<void | Response<unknown, Record<string, unknown>>>
   >
 ) {
   try {

@@ -69,7 +69,7 @@ app
   .use('/upload', uploadRouter)
   .use('/api', apiRouter)
   .use('/', (_, res) => res.send())
-  .use((error: AppError, _request: Request, res: Response, _: NextFunction) => {
+  .use((error: AppError, _request: Request, res: Response, _next: NextFunction) => {
     let logMessage = `Code: ${error.name}; message: ${error.message};`
 
     const originalError = (error.originalError as Error) || ''
