@@ -31,7 +31,22 @@ const schema = new Schema(
       type: Array,
       default: [],
       validate: {
-        validator: (value: unknown) => Array.isArray(value),
+        validator: (value: unknown) => {
+          if (!Array.isArray(value)) {
+            return false
+          }
+          for (const url of value) {
+            if (process.env.IS_CLOUD_SERVER) {
+              if (url.indexOf('http://res.cloudinary.com/') !== 0) {
+                return false
+              }
+            } else {
+              if (url.indexOf('/upload/items/') !== 0) {
+                return false
+              }
+            }
+          }
+        },
         message: 'Images must be array',
       },
     },
