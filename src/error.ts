@@ -143,9 +143,14 @@ export const Errors = {
     },
   },
   ITEMS: {
-    GET_BY_ID: {
+    COMMON: {
+      INVALID_ID: {
+        name: 'ERR_ITEMS_COMMON_INVALID_ID',
+        status: StatusCodes.BAD_REQUEST,
+        message: 'Invalid id',
+      },
       ITEM_NOT_FOUND: {
-        name: 'ERR_ITEMS_GET_BY_ID_ITEM_NOT_FOUND',
+        name: 'ERR_ITEMS_COMMON_ITEM_NOT_FOUND',
         status: StatusCodes.NOT_FOUND,
         message: 'Item not found',
       },
@@ -165,6 +170,34 @@ export const Errors = {
         name: 'ERR_ITEMS_POST_ITEM_VALIDATION_ERROR',
         status: StatusCodes.BAD_REQUEST,
         message: 'Items validation failed',
+      },
+    },
+  },
+  PROFILE: {
+    GET_PROFILE: {
+      PROFILE_NOT_FOUND: {
+        name: 'ERR_PROFILE_GET_PROFILE_PROFILE_NOT_FOUND',
+        status: StatusCodes.NOT_FOUND,
+        message: 'Profile not found',
+      },
+    },
+    DELETE_PROFILE: {
+      PROFILE_NOT_FOUND: {
+        name: 'ERR_PROFILE_DELETE_PROFILE_PROFILE_NOT_FOUND',
+        status: StatusCodes.NOT_FOUND,
+        message: 'Profile not found',
+      },
+    },
+    UPDATE_PROFILE: {
+      WRONG_EMAIL_FORMAT: {
+        name: 'ERR_PROFILE_UPDATE_PROFILE_WRONG_EMAIL_FORMAT',
+        status: StatusCodes.BAD_REQUEST,
+        message: 'Wrong email format',
+      },
+      EMAIL_ALREADY_REGISTERED: {
+        name: 'ERR_PROFILE_UPDATE_PROFILE_EMAIL_ALREADY_REGISTERED',
+        status: StatusCodes.BAD_REQUEST,
+        message: 'Email already registered',
       },
     },
   },
