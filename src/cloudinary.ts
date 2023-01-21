@@ -22,5 +22,9 @@ export async function uploadToCloudinary(file: Buffer): Promise<UploadApiRespons
 }
 
 export const deleteFromCloudinary = async (ids: Array<string>) => {
-  return Promise.all(ids.map((id) => v2.uploader.destroy(id)))
+  try {
+    return Promise.all(ids.map((id) => v2.uploader.destroy(id)))
+  } catch (error) {
+    console.error(error)
+  }
 }
