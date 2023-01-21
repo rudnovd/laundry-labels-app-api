@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from 'express'
 import { access, constants, rm } from 'fs/promises'
 import { isValidObjectId } from 'mongoose'
 import { deleteFromCloudinary } from '../cloudinary.js'
+import { config } from '../config.js'
 import { AppError, Errors } from '../error.js'
 import { ItemModel } from '../models/item.js'
 
@@ -80,27 +81,29 @@ export async function deleteItem(req: Request, res: Response, next: NextFunction
 
   const isCloudImages = deletedItem.images.some((image) => image.indexOf('cloudinary') !== -1)
 
+  const idsForDelete: Array<string> = []
+  deletedItem.images.forEach((url) => {
+    const pathname = new URL(url).pathname
+    const image = pathname.split('/').pop()
+    const id = image?.split('.')[0]
+
+    if (!isCloudImages) {
+      access(`${config.uploadPath}/${image}`, constants.F_OK)
+        .then(() => rm(`${config.uploadPath}/${image}`))
+        .catch((error) => console.log(error))
+    }
+
+    if (isCloudImages && id) {
+      idsForDelete.push(id)
+    }
+  })
+
   if (isCloudImages) {
-    const idsForDelete: Array<string> = []
-    deletedItem.images.forEach((url) => {
-      const pathname = new URL(url).pathname
-      const image = pathname.split('/').pop()
-      const id = image?.split('.')[0]
-
-      if (id) {
-        idsForDelete.push(id)
-      }
-    })
-
     try {
       deleteFromCloudinary(idsForDelete)
     } catch (error) {
       console.error(error)
     }
-  } else {
-    deletedItem.images.forEach((path) => {
-      access(`${global.__basedir}${path}`, constants.F_OK).then(() => rm(`${global.__basedir}${path}`))
-    })
   }
 
   return res.send(true)
