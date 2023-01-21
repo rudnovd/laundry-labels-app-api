@@ -5,12 +5,13 @@ import { constants } from 'fs'
 import fs from 'fs/promises'
 import sharp from 'sharp'
 import { uploadToCloudinary } from '../cloudinary.js'
+import { config } from '../config.js'
 import { AppError, Errors } from '../error.js'
 
 export async function getItemImage(req: Request, res: Response, next: NextFunction) {
   try {
-    await fs.access(`${global.__basedir}/upload/items/${req.params.file}`, constants.F_OK)
-    res.sendFile(`${global.__basedir}/upload/items/${req.params.file}`)
+    await fs.access(`${config.uploadPath}/${req.params.file}`, constants.F_OK)
+    res.sendFile(`${config.uploadPath}/${req.params.file}`)
   } catch (error) {
     next(new AppError(Errors.UPLOAD.GET_ITEM_IMAGE.NOT_FOUND, error))
   }
@@ -42,8 +43,8 @@ export async function uploadItemImage(req: Request, res: Response, next: NextFun
     res.json({ url: uploadedFile?.url ?? '' })
   } else {
     const fileName = randomUUID()
-    const filePath = `${global.__basedir}/upload/items/${fileName}.webp`
-    const uploadedFile = await fs.writeFile(filePath, JSON.stringify(fileBuffer))
-    return res.json({ url: `/upload/items/${uploadedFile}.webp` })
+    const filePath = `${config.uploadPath}/${fileName}.webp`
+    fs.writeFile(filePath, fileBuffer)
+    return res.json({ url: `/upload/items/${fileName}.webp` })
   }
 }

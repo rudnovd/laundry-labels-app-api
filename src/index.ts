@@ -5,6 +5,7 @@ import express from 'express'
 import fileUpload from 'express-fileupload'
 import { expressjwt } from 'express-jwt'
 import rateLimit from 'express-rate-limit'
+import { access, constants } from 'fs/promises'
 import helmet from 'helmet'
 import { StatusCodes } from 'http-status-codes'
 import mongoose from 'mongoose'
@@ -19,7 +20,6 @@ import './redis.js'
 import { apiRouter, authRouter, uploadRouter } from './router.js'
 
 const __filename = fileURLToPath(import.meta.url)
-
 global.__basedir = path.dirname(__filename)
 
 if (config.databaseURI) {
@@ -30,6 +30,15 @@ if (config.databaseURI) {
     .catch((error) => logger.error(`Server: ${error}`))
 } else {
   throw new Error('DATABASE_URI not found in .env file')
+}
+
+if (!process.env.IS_CLOUD_SERVER) {
+  access(config.uploadPath, constants.F_OK).catch(() => {
+    throw new Error('Upload directory are not created')
+  })
+  access(config.logsPath, constants.F_OK).catch(() => {
+    throw new Error('Logs directory are not created')
+  })
 }
 
 export const app = express()

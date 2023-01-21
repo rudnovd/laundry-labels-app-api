@@ -1,5 +1,6 @@
 import winston from 'winston'
 import DailyRotateFile from 'winston-daily-rotate-file'
+import { config } from './config.js'
 
 export const logger = winston.createLogger({
   level: 'http',
@@ -14,12 +15,12 @@ export const logger = winston.createLogger({
   ],
 })
 
-if (process.env.SAVE_LOGS) {
+if (!process.env.IS_CLOUD_SERVER) {
   logger.add(
     new DailyRotateFile({
       datePattern: 'DD-MM-YYYY',
       filename: '%DATE%.log',
-      dirname: './logs',
+      dirname: config.logsPath,
       maxSize: '50mb',
       maxFiles: '100d',
       format: winston.format.combine(

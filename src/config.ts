@@ -10,4 +10,6 @@ export const config = {
     api_key: process.env.CLOUDINARY_API_KEY,
     api_secret: process.env.CLOUDINARY_API_SECRET,
   },
+  uploadPath: process.env.UPLOAD_PATH || `${global.__basedir}/upload/items`,
+  logsPath: process.env.LOGS_PATH || `${global.__basedir}/logs`,
 }
