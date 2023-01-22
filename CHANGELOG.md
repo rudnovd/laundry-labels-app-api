@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.0.0-alpha.3](https://github.com/rudnovd/laundry-labels-app-api/compare/v0.0.0-alpha.2...v0.0.0-alpha.3) (2023-01-22)
+
+
+### Features
+
+* **api:** add name field in Item schema ([03cf1c0](https://github.com/rudnovd/laundry-labels-app-api/commit/03cf1c07e0405f681c63ec23534152561a54e36a))
+* **api:** add profile api ([d38cc7b](https://github.com/rudnovd/laundry-labels-app-api/commit/d38cc7bb91bd506ecfa67fe4bc3f9ad60801f1d0))
+* **cloudinary:** upload image to cloudinary from buffer ([93258e9](https://github.com/rudnovd/laundry-labels-app-api/commit/93258e9423165b46fc4bed4ca7ef837a6fde1802))
+* **config:** add env values for upload path and logs path ([62f388d](https://github.com/rudnovd/laundry-labels-app-api/commit/62f388d72aa839bb2dcd887526ce692251e3d350))
+* **error:** add new errors objects ([560bb62](https://github.com/rudnovd/laundry-labels-app-api/commit/560bb6254b5e08a23a1c9b094917fc252bb7b41b))
+* **items:** update items api ([52d3d0f](https://github.com/rudnovd/laundry-labels-app-api/commit/52d3d0f5ab02adcd1bbebf91c38d77b298e87d5d))
+* **models:** add images validation for items ([2830b9f](https://github.com/rudnovd/laundry-labels-app-api/commit/2830b9fc48694127f25b5cd75142a632c04a9445))
+* **router:** add /api route ([2fa55d3](https://github.com/rudnovd/laundry-labels-app-api/commit/2fa55d3361444727db805d8ba6a2e98a7ee51169))
+* **upload:** use buffer when upload file ([041b50e](https://github.com/rudnovd/laundry-labels-app-api/commit/041b50e78d456713e998dc9ef1f0c193aa60ab6b))
+
+
+### Bug Fixes
+
+* **cloudinary:** fix async function catching ([fbc730b](https://github.com/rudnovd/laundry-labels-app-api/commit/fbc730b5dc2965d423b74e4226271c14b09e0783))
+* **redis:** fix config ([9343f0e](https://github.com/rudnovd/laundry-labels-app-api/commit/9343f0ed9678f6a907d605037dc8c8f76ef6c320))
+
 ## [0.0.0-alpha.2](https://github.com/rudnovd/laundry-labels-app-api/compare/v0.0.0-alpha.1...v0.0.0-alpha.2) (2022-06-22)
 
 
