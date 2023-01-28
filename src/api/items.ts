@@ -59,7 +59,11 @@ export async function editItem(req: Request, res: Response, next: NextFunction) 
     return next(new AppError(Errors.ITEMS.COMMON.INVALID_ID))
   }
 
-  const updatedItem = await ItemModel.findOneAndUpdate({ _id, owner: req.auth?.data._id }, { name, icons, tags })
+  const updatedItem = await ItemModel.findOneAndUpdate(
+    { _id, owner: req.auth?.data._id },
+    { name, icons, tags },
+    { new: true }
+  )
   if (!updatedItem) {
     return next(new AppError(Errors.ITEMS.COMMON.ITEM_NOT_FOUND))
   }
