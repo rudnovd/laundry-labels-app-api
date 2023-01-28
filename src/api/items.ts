@@ -41,15 +41,14 @@ export async function postItem(req: Request, res: Response, next: NextFunction) 
     owner: req.auth?.data._id,
   })
 
-  await newItem.validate()
-
   try {
-    const item = await newItem.save()
-
-    return res.send(item)
+    await newItem.validate()
   } catch (error: unknown) {
     return next(new AppError(Errors.ITEMS.POST_ITEM.ITEM_VALIDATION_ERROR, error))
   }
+
+  const item = await newItem.save()
+  return res.send(item)
 }
 
 export async function editItem(req: Request, res: Response, next: NextFunction) {
