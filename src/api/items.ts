@@ -7,7 +7,7 @@ import { AppError, Errors } from '../error.js'
 import { ItemModel } from '../models/item.js'
 
 export async function getItems(req: Request, res: Response, _next: NextFunction) {
-  const items = await ItemModel.find({ owner: req.auth?.data._id }).lean()
+  const items = await ItemModel.find({ owner: req.auth?.data._id }, '-owner').lean()
   res.send(items)
 }
 
