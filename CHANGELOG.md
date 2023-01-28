@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.0.0-alpha.4](https://github.com/rudnovd/laundry-labels-app-api/compare/v0.0.0-alpha.3...v0.0.0-alpha.4) (2023-01-28)
+
+
+### Bug Fixes
+
+* **items:** return editItem result after updating model ([e49366b](https://github.com/rudnovd/laundry-labels-app-api/commit/e49366b7e0bdffd8b81378352e10db87f61addd3))
+* **router:** handle wrong routes ([05eddc9](https://github.com/rudnovd/laundry-labels-app-api/commit/05eddc94e468dae84cb355af3b55c2faf6743948))
+
 ## [0.0.0-alpha.3](https://github.com/rudnovd/laundry-labels-app-api/compare/v0.0.0-alpha.2...v0.0.0-alpha.3) (2023-01-22)
 
 
