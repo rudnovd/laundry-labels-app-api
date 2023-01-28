@@ -1,4 +1,5 @@
 import { NextFunction, Request, Response, Router } from 'express'
+import { StatusCodes } from 'http-status-codes'
 import { deleteItem, editItem, getItemById, getItems, postItem } from './api/items.js'
 import { deleteProfile, getProfile, updateProfile } from './api/profile.js'
 import { getItemImage, uploadItemImage } from './api/upload.js'
@@ -25,6 +26,9 @@ authRouter.post('/login', (req, res, next) => asyncHandler(req, res, next, login
 authRouter.post('/registration', (req, res, next) => asyncHandler(req, res, next, registration))
 authRouter.post('/refreshtoken', (req, res, next) => asyncHandler(req, res, next, refreshToken))
 authRouter.post('/logout', (req, res, next) => asyncHandler(req, res, next, logout))
+authRouter.use('*', (req, res, next) =>
+  next(new AppError({ name: 'Route not found', message: 'Route not found', status: StatusCodes.NOT_FOUND }))
+)
 
 export const apiRouter = Router()
 apiRouter.get('/items', (req, res, next) => asyncHandler(req, res, next, getItems))
@@ -39,6 +43,12 @@ apiRouter.post('/upload/items', (req, res, next) => asyncHandler(req, res, next,
 apiRouter.get('/profile', (req, res, next) => asyncHandler(req, res, next, getProfile))
 apiRouter.put('/profile', (req, res, next) => asyncHandler(req, res, next, updateProfile))
 apiRouter.delete('/profile', (req, res, next) => asyncHandler(req, res, next, deleteProfile))
+apiRouter.use('*', (req, res, next) =>
+  next(new AppError({ name: 'Route not found', message: 'Route not found', status: StatusCodes.NOT_FOUND }))
+)
 
 export const uploadRouter = Router()
 uploadRouter.get('/items/:file', (req, res, next) => asyncHandler(req, res, next, getItemImage))
+uploadRouter.use('*', (req, res, next) =>
+  next(new AppError({ name: 'Route not found', message: 'Route not found', status: StatusCodes.NOT_FOUND }))
+)
