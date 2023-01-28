@@ -13,7 +13,8 @@
     "importsNotUsedAsValues": "error",
     "types": ["@types/node", "./src/types/server"],
     "rootDir": "src",
-    "outDir": "dist"
+    "outDir": "dist",
+    "skipLibCheck": true
   },
   "include": ["./src/**/*.ts"],
   "exclude": ["node_modules"]
