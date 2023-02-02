@@ -1,10 +1,12 @@
 import type { NextFunction, Request, Response } from 'express'
 import { access, constants, rm } from 'fs/promises'
+import { StatusCodes } from 'http-status-codes'
 import { isValidObjectId } from 'mongoose'
 import { deleteFromCloudinary } from '../cloudinary.js'
 import { config } from '../config.js'
 import { AppError, Errors } from '../error.js'
 import { ItemModel } from '../models/item.js'
+import { collectErrorsMessage } from '../utilts.js'
 
 export async function getItems(req: Request, res: Response, _next: NextFunction) {
   const items = await ItemModel.find({ owner: req.auth?.data._id }, '-owner').lean()
@@ -43,8 +45,14 @@ export async function postItem(req: Request, res: Response, next: NextFunction) 
 
   try {
     await newItem.validate()
-  } catch (error: unknown) {
-    return next(new AppError(Errors.ITEMS.POST_ITEM.ITEM_VALIDATION_ERROR, error))
+  } catch (error: any) {
+    return next(
+      new AppError({
+        name: 'ERR_ITEMS_POST_ITEM_VALIDATION_ERROR',
+        status: StatusCodes.BAD_REQUEST,
+        message: collectErrorsMessage(error),
+      })
+    )
   }
 
   const item = await newItem.save()
