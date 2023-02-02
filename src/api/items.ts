@@ -86,7 +86,7 @@ export async function deleteItem(req: Request, res: Response, next: NextFunction
 
   const idsForDelete: Array<string> = []
   deletedItem.images.forEach((url) => {
-    const pathname = new URL(url).pathname
+    const pathname = isCloudImages ? new URL(url).pathname : url
     const image = pathname.split('/').pop()
     const id = image?.split('.')[0]
 
