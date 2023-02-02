@@ -14,11 +14,18 @@ const schema = new Schema(
     email: {
       type: String,
       required: true,
+      options: {
+        trim: true,
+        max: 320,
+      },
     },
     password: {
       type: String,
       required: true,
       select: false,
+      options: {
+        max: 64,
+      },
     },
     isDisabled: {
       type: Boolean,
