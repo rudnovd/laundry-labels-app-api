@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.0.0-alpha.5](https://github.com/rudnovd/laundry-labels-app-api/compare/v0.0.0-alpha.4...v0.0.0-alpha.5) (2023-02-05)
+
+
+### Features
+
+* add available item icons constant ([1e49bbd](https://github.com/rudnovd/laundry-labels-app-api/commit/1e49bbda83bb40e5c3157271cdb0be6382c63d1a))
+* **models:** add new validators for item model ([05f209f](https://github.com/rudnovd/laundry-labels-app-api/commit/05f209f3debdffeaf58c7740f75d72150183566e))
+* **models:** add options in user schema ([3b5b62a](https://github.com/rudnovd/laundry-labels-app-api/commit/3b5b62a3102011231a1c5a27b0b68680cb69c1d9))
+
+
+### Bug Fixes
+
+* **items:** images url parsing ([ba6ad05](https://github.com/rudnovd/laundry-labels-app-api/commit/ba6ad05155e08fd88d6f0ec56962a28cf8c9a94d))
+
 ## [0.0.0-alpha.4](https://github.com/rudnovd/laundry-labels-app-api/compare/v0.0.0-alpha.3...v0.0.0-alpha.4) (2023-01-28)
 
 
