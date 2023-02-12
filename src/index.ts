@@ -34,10 +34,14 @@ if (config.databaseURI) {
 
 if (!process.env.IS_CLOUD_SERVER) {
   access(config.uploadPath, constants.F_OK).catch(() => {
-    throw new Error('Upload directory are not created')
+    mkdir(config.uploadPath, { recursive: true }).catch(() => {
+      throw new Error(`Cannot create upload directory (${config.uploadPath})`)
+    })
   })
   access(config.logsPath, constants.F_OK).catch(() => {
-    throw new Error('Logs directory are not created')
+    mkdir(config.logsPath, { recursive: true }).catch(() => {
+      throw new Error(`Cannot create logs directory (${config.logsPath})`)
+    })
   })
 }
 
