@@ -18,20 +18,6 @@ services:
       - main-network
     depends_on:
       - app-service
-  goaccess-service:
-    image: allinurl/goaccess:1.5.3
-    container_name: laundry-labels-app-goaccess
-    ports:
-      - 7890:7890
-    restart: unless-stopped
-    volumes:
-      - ./docker/goaccess/goaccess.conf:/etc/goaccess/goaccess.conf
-      - nginx-logs-volume:/etc/goaccess/logs
-    networks:
-      - main-network
-    depends_on:
-      - nginx-service
-    command: goaccess --no-global-config --config-file=/etc/goaccess/goaccess.conf
   mongodb-service:
     image: mongo:latest
     container_name: laundry-labels-app-mongodb
