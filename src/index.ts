@@ -5,7 +5,7 @@ import express from 'express'
 import fileUpload from 'express-fileupload'
 import { expressjwt } from 'express-jwt'
 import rateLimit from 'express-rate-limit'
-import { access, constants } from 'fs/promises'
+import { access, constants, mkdir } from 'fs/promises'
 import helmet from 'helmet'
 import { StatusCodes } from 'http-status-codes'
 import mongoose from 'mongoose'
@@ -73,15 +73,15 @@ app
   )
 
 app
+  .use(/^\/$/i, (_, res) => res.send(`<div><p>version: ${process.env.npm_package_version}</p></div>`))
+  .use(/^\/auth\/?(?=\/|$)/i, authRouter)
   .use(
     expressjwt({ secret: config.jwtSecret, algorithms: ['HS512'] }).unless({
-      path: ['/', /^\/auth\/.*/, { url: /^\/upload\/items\/.*/, methods: ['GET'] }],
+      path: [{ url: /^\/upload\/items\/.*/, methods: ['GET'] }],
     })
   )
-  .use('/auth', authRouter)
-  .use('/upload', uploadRouter)
-  .use('/api', apiRouter)
-  .use('/', (_, res) => res.send())
+  .use(/^\/upload\/?(?=\/|$)/i, uploadRouter)
+  .use(/^\/api\/?(?=\/|$)/i, apiRouter)
   .use((error: AppError, _request: Request, res: Response, _next: NextFunction) => {
     let logMessage = `Code: ${error.name}; message: ${error.message};`
 
