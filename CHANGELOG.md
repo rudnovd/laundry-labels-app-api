@@ -2,6 +2,8 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.0.0-alpha.6](https://github.com/rudnovd/laundry-labels-app-api/compare/v0.0.0-alpha.5...v0.0.0-alpha.6) (2023-02-12)
+
 ## [0.0.0-alpha.5](https://github.com/rudnovd/laundry-labels-app-api/compare/v0.0.0-alpha.4...v0.0.0-alpha.5) (2023-02-05)
 
 
