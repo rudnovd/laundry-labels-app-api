@@ -184,9 +184,6 @@ export async function logout(req: Request, res: Response, next: NextFunction) {
     return next(Errors.AUTH.LOGOUT.REFRESHTOKEN_COOKIE_NOT_FOUND)
   }
 
-  const token = await RefreshTokenModel.findOneAndDelete({ token: refreshToken }).lean()
-  if (!token) {
-    return next(Errors.AUTH.LOGOUT.REFRESHTOKEN_COOKIE_NOT_FOUND)
-  }
+  await RefreshTokenModel.findOneAndDelete({ token: refreshToken }).lean()
   return res.send(true)
 }
