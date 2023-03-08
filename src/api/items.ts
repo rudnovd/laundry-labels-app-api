@@ -61,7 +61,7 @@ export async function postItem(req: Request, res: Response, next: NextFunction) 
 
 export async function editItem(req: Request, res: Response, next: NextFunction) {
   const { _id } = req.params
-  const { name, icons, tags } = req.body
+  const { name, icons, tags, images } = req.body
 
   if (!isValidObjectId(_id)) {
     return next(new AppError(Errors.ITEMS.COMMON.INVALID_ID))
@@ -69,7 +69,7 @@ export async function editItem(req: Request, res: Response, next: NextFunction) 
 
   const updatedItem = await ItemModel.findOneAndUpdate(
     { _id, owner: req.auth?.data._id },
-    { name, icons, tags },
+    { name, icons, tags, images },
     { new: true }
   )
   if (!updatedItem) {
