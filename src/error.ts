@@ -96,7 +96,7 @@ export const Errors = {
       WRONG_PASSWORD_LENGTH: {
         name: 'ERR_AUTH_REGISTRATION_WRONG_PASSWORD_LENGTH',
         status: StatusCodes.BAD_REQUEST,
-        message: 'Password must be more than 5 symbols',
+        message: 'Password must be more than 5 characters',
       },
       CAPTCHA_TOKEN_NOT_FOUND: {
         name: 'ERR_AUTH_REGISTRATION_CAPTCHA_TOKEN_NOT_FOUND',
@@ -108,10 +108,10 @@ export const Errors = {
         status: StatusCodes.BAD_REQUEST,
         message: 'Wrong captcha token',
       },
-      EMAIL_ALREADY_EXIST: {
-        name: 'ERR_AUTH_REGISTRATION_EMAIL_ALREADY_EXIST',
+      EMAIL_ALREADY_REGISTERED: {
+        name: 'ERR_AUTH_REGISTRATION_EMAIL_ALREADY_REGISTERED',
         status: StatusCodes.BAD_REQUEST,
-        message: 'Email already exists',
+        message: 'Email already registered',
       },
     },
     REFRESHTOKEN: {

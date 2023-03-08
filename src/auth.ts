@@ -51,7 +51,7 @@ export async function registration(req: Request, res: Response, next: NextFuncti
   }
   if (!validator.default.isEmail(email)) {
     return next(new AppError(Errors.AUTH.REGISTRATION.WRONG_EMAIL_FORMAT))
-  } else if (password.length < 5) {
+  } else if (password.length < 6) {
     return next(new AppError(Errors.AUTH.REGISTRATION.WRONG_PASSWORD_LENGTH))
   }
 
@@ -64,9 +64,9 @@ export async function registration(req: Request, res: Response, next: NextFuncti
     }
   }
 
-  const currentUser = await UserModel.findOne({ email }).lean()
-  if (currentUser) {
-    return next(new AppError(Errors.AUTH.REGISTRATION.EMAIL_ALREADY_EXIST))
+  const userWithEnteredEmail = await UserModel.findOne({ email }).lean()
+  if (userWithEnteredEmail) {
+    return next(new AppError(Errors.AUTH.REGISTRATION.EMAIL_ALREADY_REGISTERED))
   }
 
   const newUser = new UserModel({
