@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.0.0-alpha.7](https://github.com/rudnovd/laundry-labels-app-api/compare/v0.0.0-alpha.6...v0.0.0-alpha.7) (2023-03-08)
+
+
+### Features
+
+* **items:** allow edit images ([9a6de41](https://github.com/rudnovd/laundry-labels-app-api/commit/9a6de41c497e726fe0c2779306f737eca7c299b4))
+
+
+### Bug Fixes
+
+* **auth:** fix password length in registration, refactor ([917f94f](https://github.com/rudnovd/laundry-labels-app-api/commit/917f94f7cdb159674c3883cac74ec592091da4ff))
+* **auth:** remove token checking in logout ([9dcfed4](https://github.com/rudnovd/laundry-labels-app-api/commit/9dcfed4909e07f8d49895900956393928d1ac394))
+* **upload:** fix root path in getItemImage method ([fce3683](https://github.com/rudnovd/laundry-labels-app-api/commit/fce36834fd671bd4da1e74a4e6f2eb7aca880279))
+
 ## [0.0.0-alpha.6](https://github.com/rudnovd/laundry-labels-app-api/compare/v0.0.0-alpha.5...v0.0.0-alpha.6) (2023-02-12)
 
 ## [0.0.0-alpha.5](https://github.com/rudnovd/laundry-labels-app-api/compare/v0.0.0-alpha.4...v0.0.0-alpha.5) (2023-02-05)
