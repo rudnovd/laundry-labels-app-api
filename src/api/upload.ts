@@ -3,6 +3,7 @@ import type { NextFunction, Request, Response } from 'express'
 import type { UploadedFile } from 'express-fileupload'
 import { constants } from 'fs'
 import fs from 'fs/promises'
+import path from 'path'
 import sharp from 'sharp'
 import { uploadToCloudinary } from '../cloudinary.js'
 import { config } from '../config.js'
@@ -11,7 +12,7 @@ import { AppError, Errors } from '../error.js'
 export async function getItemImage(req: Request, res: Response, next: NextFunction) {
   try {
     await fs.access(`${config.uploadPath}/${req.params.file}`, constants.F_OK)
-    res.sendFile(`${config.uploadPath}/${req.params.file}`)
+    res.sendFile(`${config.uploadPath}/${req.params.file}`, { root: path.dirname(__basedir) })
   } catch (error) {
     next(new AppError(Errors.UPLOAD.GET_ITEM_IMAGE.NOT_FOUND, error))
   }
