@@ -1,4 +1,11 @@
-export type ItemIconGroup = 'washing' | 'bleaching' | 'ironing' | 'drying' | 'dry-cleaning' | 'wet-cleaning'
+export type ItemIconGroup =
+  | 'washing'
+  | 'bleaching'
+  | 'ironing'
+  | 'tumble-drying'
+  | 'natural-drying'
+  | 'dry-cleaning'
+  | 'wet-cleaning'
 
 export const itemsIcons: Record<ItemIconGroup, Array<string>> & { [key: string]: Array<string> } = {
   washing: [
@@ -22,14 +29,22 @@ export const itemsIcons: Record<ItemIconGroup, Array<string>> & { [key: string]:
   ],
   bleaching: ['bleach', 'do-not-bleach', 'non-chlorine-bleach'],
   ironing: ['iron', 'do-not-iron', 'iron-low', 'iron-medium', 'iron-high', 'iron-steam', 'iron-do-not-steam'],
-  drying: [
+  'tumble-drying': [
     'tumble-dry',
     'do-not-tumble-dry',
     'tumble-dry-low-heat',
     'tumble-dry-medium-heat',
     'tumble-dry-high-heat',
+  ],
+  'natural-drying': [
+    'dry',
+    'dry-in-shade',
+    'line-dry',
+    'line-dry-in-shade',
     'drip-dry',
+    'drip-dry-in-shade',
     'dry-flat',
+    'dry-flat-in-shade',
   ],
   'dry-cleaning': [
     'dry-clean',
