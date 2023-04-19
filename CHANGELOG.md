@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.0.0-alpha.8](https://github.com/rudnovd/laundry-labels-app-api/compare/v0.0.0-alpha.7...v0.0.0-alpha.8) (2023-04-19)
+
+
+### Features
+
+* update icons list ([6148fc2](https://github.com/rudnovd/laundry-labels-app-api/commit/6148fc2b08ed294de6181e5cfe153e5e7241c651))
+
+
+### Bug Fixes
+
+* **upload:** fix root path when upload path out of project directory ([a1e11df](https://github.com/rudnovd/laundry-labels-app-api/commit/a1e11dfc7cdfd3641310884bd66564fcf24fa8e1))
+
 ## [0.0.0-alpha.7](https://github.com/rudnovd/laundry-labels-app-api/compare/v0.0.0-alpha.6...v0.0.0-alpha.7) (2023-03-08)
 
 
