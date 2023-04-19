@@ -12,7 +12,9 @@ import { AppError, Errors } from '../error.js'
 export async function getItemImage(req: Request, res: Response, next: NextFunction) {
   try {
     await fs.access(`${config.uploadPath}/${req.params.file}`, constants.F_OK)
-    res.sendFile(`${config.uploadPath}/${req.params.file}`, { root: path.dirname(__basedir) })
+    res.sendFile(`${config.uploadPath}/${req.params.file}`, {
+      root: config.uploadPath[0] === '/' ? '/' : path.dirname(__basedir),
+    })
   } catch (error) {
     next(new AppError(Errors.UPLOAD.GET_ITEM_IMAGE.NOT_FOUND, error))
   }
